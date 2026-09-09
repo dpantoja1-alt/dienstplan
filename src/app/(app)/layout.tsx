@@ -1,12 +1,19 @@
 import Link from "next/link";
 import { signOut } from "@/auth";
 import { requireUser } from "@/lib/auth-helpers";
+import { prisma } from "@/lib/prisma";
 import { NavLink } from "./nav-link";
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   const session = await requireUser();
   const { name, role } = session.user;
   const isAdmin = role === "ADMIN";
+
+  const pendingReviews = isAdmin
+    ? await prisma.timeEntry.count({
+        where: { status: "PENDING", end: { not: null } },
+      })
+    : 0;
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -18,7 +25,18 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             </Link>
             <nav className="flex items-center gap-1 text-sm">
               <NavLink href="/dashboard">Übersicht</NavLink>
+              <NavLink href="/zeiten" exact>Zeiten</NavLink>
               {isAdmin && <NavLink href="/mitarbeiter">Mitarbeiter</NavLink>}
+              {isAdmin && (
+                <NavLink href="/zeiten/pruefen">
+                  Prüfen
+                  {pendingReviews > 0 && (
+                    <span className="ml-1 rounded-full bg-amber-500 px-1.5 text-xs text-white">
+                      {pendingReviews}
+                    </span>
+                  )}
+                </NavLink>
+              )}
               <NavLink href="/konto">Konto</NavLink>
             </nav>
           </div>

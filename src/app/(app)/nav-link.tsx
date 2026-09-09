@@ -6,13 +6,17 @@ import type { Route } from "next";
 
 export function NavLink({
   href,
+  exact = false,
   children,
 }: {
   href: Route;
+  exact?: boolean;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const active = pathname === href || pathname.startsWith(`${href}/`);
+  const active = exact
+    ? pathname === href
+    : pathname === href || pathname.startsWith(`${href}/`);
 
   return (
     <Link

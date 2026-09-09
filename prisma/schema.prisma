@@ -15,6 +15,16 @@ enum Role {
   EMPLOYEE
 }
 
+enum TimeEntrySource {
+  CLOCK // per Stempeluhr erfasst
+  MANUAL // manuell eingetragen
+}
+
+enum TimeEntryStatus {
+  PENDING // offen – vom Mitarbeiter änderbar, wartet auf Bestätigung
+  CONFIRMED // vom Admin bestätigt – für den Mitarbeiter gesperrt
+}
+
 model User {
   id           String  @id @default(cuid())
   email        String  @unique
@@ -34,6 +44,29 @@ model User {
   inviteTokenHash String?   @unique
   inviteExpiresAt DateTime?
 
+  timeEntries TimeEntry[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model TimeEntry {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  start        DateTime
+  end          DateTime? // null = läuft noch (eingestempelt)
+  breakMinutes Int? // null = automatisch (gesetzlich + MA-Mindestwert)
+  note         String?
+
+  source         TimeEntrySource @default(MANUAL)
+  status         TimeEntryStatus @default(PENDING)
+  correctionNote String? // Begründung des Mitarbeiters bei einer Korrektur
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, start])
+  @@index([status])
 }

@@ -47,7 +47,15 @@ export default async function MitarbeiterDetailPage({
       >
         ← Zurück zur Liste
       </Link>
-      <h1 className="mt-2 text-2xl font-semibold">{user.name}</h1>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-2xl font-semibold">{user.name}</h1>
+        <Link
+          href={`/mitarbeiter/${user.id}/zeiten`}
+          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm transition hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
+        >
+          Zeiten ansehen
+        </Link>
+      </div>
 
       {saved && (
         <p className="mt-3 rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
