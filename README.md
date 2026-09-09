@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Dienstplan
 
-## Getting Started
+Interne Web-App für Dienstplanung und Zeiterfassung (bis ~10 Mitarbeiter).
 
-First, run the development server:
+**Stack:** Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · Prisma · PostgreSQL (Neon) · Auth.js v5 · Deploy auf Vercel
+
+## Phasen
+
+1. **Grundgerüst + Login + Deployment** ← _aktuell_
+2. Mitarbeiterprofile
+3. Zeiterfassung (Stempeluhr + manuelle Korrektur)
+4. Schichtplan mit Vorlagen
+5. Urlaub + NRW-Feiertage
+6. Auswertungen + PDF/CSV-Export
+
+## Lokal einrichten
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env      # dann .env ausfüllen (siehe unten)
+npm run db:push           # Tabellen in der Datenbank anlegen
+npm run db:seed           # Admin-Konto aus ADMIN_* in .env anlegen
+npm run dev               # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### `.env`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variable         | Woher                                                                    |
+| ---------------- | ----------------------------------------------------------------------- |
+| `DATABASE_URL`   | Neon-Dashboard → Connection string (Pooled), mit `?sslmode=require`     |
+| `AUTH_SECRET`    | `npx auth secret` oder `openssl rand -base64 33`                        |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` / `ADMIN_NAME` | Zugangsdaten für das erste Admin-Konto (nur für `db:seed`) |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deployment (Vercel)
 
-## Learn More
+1. Repo zu GitHub pushen.
+2. Auf [vercel.com](https://vercel.com) → **New Project** → GitHub-Repo importieren.
+3. Environment Variables setzen: `DATABASE_URL`, `AUTH_SECRET`.
+   `AUTH_URL` wird auf Vercel automatisch erkannt.
+4. Deploy. Danach einmalig `npx prisma db push` und `npm run db:seed`
+   lokal gegen die Produktions-`DATABASE_URL` ausführen (oder via Neon SQL Editor).
 
-To learn more about Next.js, take a look at the following resources:
+## Nützliche Skripte
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Befehl              | Zweck                                  |
+| ------------------- | -------------------------------------- |
+| `npm run dev`       | Dev-Server                             |
+| `npm run build`     | Produktions-Build (inkl. `prisma generate`) |
+| `npm run db:push`   | Schema → Datenbank (ohne Migration)    |
+| `npm run db:seed`   | Admin-Konto anlegen/aktualisieren      |
+| `npm run db:studio` | Prisma Studio (DB im Browser)          |
+| `npm run lint`      | ESLint                                 |
