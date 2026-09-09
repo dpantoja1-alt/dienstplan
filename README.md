@@ -8,8 +8,8 @@ Interne Web-App für Dienstplanung und Zeiterfassung (bis ~10 Mitarbeiter).
 
 1. ~~Grundgerüst + Login + Deployment~~ ✓
 2. ~~Mitarbeiterprofile~~ ✓ (Liste, Einladungslink, bearbeiten, Passwort ändern)
-3. **Zeiterfassung** ← _aktuell_ (Stempeluhr, manuelle Einträge, Pausenlogik, Admin-Freigabe)
-4. Schichtplan mit Vorlagen
+3. ~~Zeiterfassung~~ ✓ (Stempeluhr, manuelle Einträge, Pausenlogik, Admin-Freigabe)
+4. **Schichtplan mit Vorlagen** ← _aktuell_ (Wochenraster, Vorlagen, Vorwoche kopieren)
 5. Urlaub + NRW-Feiertage
 6. Auswertungen + PDF/CSV-Export
 

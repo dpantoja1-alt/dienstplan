@@ -18,13 +18,14 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="border-b border-slate-200 dark:border-slate-800">
-        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-3">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-3">
           <div className="flex items-center gap-6">
             <Link href="/dashboard" className="font-semibold">
               Dienstplan
             </Link>
             <nav className="flex items-center gap-1 text-sm">
               <NavLink href="/dashboard">Übersicht</NavLink>
+              <NavLink href="/plan">Plan</NavLink>
               <NavLink href="/zeiten" exact>Zeiten</NavLink>
               {isAdmin && <NavLink href="/mitarbeiter">Mitarbeiter</NavLink>}
               {isAdmin && (
@@ -60,7 +61,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-6">{children}</main>
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">{children}</main>
     </div>
   );
 }

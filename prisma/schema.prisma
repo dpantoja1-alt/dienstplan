@@ -45,9 +45,53 @@ model User {
   inviteExpiresAt DateTime?
 
   timeEntries TimeEntry[]
+  shifts      Shift[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/// Wiederverwendbare Schichtvorlage, z. B. "Früh 06:00–14:00".
+model ShiftTemplate {
+  id           String  @id @default(cuid())
+  name         String // "Frühschicht"
+  shortLabel   String // "Früh" – kompakte Anzeige im Plan
+  startMinutes Int // Minuten ab Mitternacht, 360 = 06:00
+  endMinutes   Int // 840 = 14:00; <= startMinutes bedeutet über Mitternacht
+  breakMinutes Int? // geplante Pause (optional)
+  color        String  @default("#64748b")
+  active       Boolean @default(true)
+  sortOrder    Int     @default(0)
+
+  shifts    Shift[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Einem Mitarbeiter an einem Tag zugewiesene Schicht.
+model Shift {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  date DateTime @db.Date
+
+  templateId String?
+  template   ShiftTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  // Snapshot der Werte – spätere Vorlagenänderungen wirken nicht rückwirkend
+  startMinutes Int
+  endMinutes   Int
+  breakMinutes Int?
+  label        String
+  color        String
+  note         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([date])
+  @@index([userId, date])
 }
 
 model TimeEntry {
