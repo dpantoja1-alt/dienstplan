@@ -16,12 +16,24 @@ enum Role {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
+  id           String  @id @default(cuid())
+  email        String  @unique
   name         String
-  passwordHash String
-  role         Role     @default(EMPLOYEE)
-  active       Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  passwordHash String? // null, bis die Einladung angenommen wurde
+  role         Role    @default(EMPLOYEE)
+  active       Boolean @default(false)
+
+  // Anstellung / Arbeitszeit
+  weeklyHours         Float     @default(40)
+  workDaysPerWeek     Int       @default(5)
+  vacationDaysPerYear Float     @default(30)
+  minBreakMinutes     Int       @default(0) // 0 = nur gesetzliche Pausenlogik
+  employmentStart     DateTime?
+
+  // Einladungs-Flow
+  inviteTokenHash String?   @unique
+  inviteExpiresAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

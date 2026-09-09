@@ -13,10 +13,11 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
-      const isOnLogin = nextUrl.pathname === "/login";
+      const { pathname } = nextUrl;
 
-      if (isOnLogin) {
-        if (isLoggedIn) {
+      // Öffentlich erreichbar (auch ohne Login).
+      if (pathname === "/login" || pathname.startsWith("/invite")) {
+        if (isLoggedIn && pathname === "/login") {
           return Response.redirect(new URL("/dashboard", nextUrl));
         }
         return true;

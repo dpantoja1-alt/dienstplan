@@ -6,8 +6,8 @@ Interne Web-App für Dienstplanung und Zeiterfassung (bis ~10 Mitarbeiter).
 
 ## Phasen
 
-1. **Grundgerüst + Login + Deployment** ← _aktuell_
-2. Mitarbeiterprofile
+1. ~~Grundgerüst + Login + Deployment~~ ✓
+2. **Mitarbeiterprofile** ← _aktuell_ (Liste, anlegen per Einladungslink, bearbeiten, Passwort ändern)
 3. Zeiterfassung (Stempeluhr + manuelle Korrektur)
 4. Schichtplan mit Vorlagen
 5. Urlaub + NRW-Feiertage
@@ -30,6 +30,8 @@ npm run dev               # http://localhost:3000
 | `DATABASE_URL`   | Neon-Dashboard → Connection string (Pooled), mit `?sslmode=require`     |
 | `AUTH_SECRET`    | `npx auth secret` oder `openssl rand -base64 33`                        |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` / `ADMIN_NAME` | Zugangsdaten für das erste Admin-Konto (nur für `db:seed`) |
+| `RESEND_API_KEY` | Optional. Von [resend.com](https://resend.com) – für Einladungs-E-Mails. Ohne Key wird der Link nur im Admin-Bereich angezeigt. |
+| `EMAIL_FROM`     | Optional. Absenderadresse (erst nach Domain-Verifizierung bei Resend).  |
 
 ## Deployment (Vercel)
 
