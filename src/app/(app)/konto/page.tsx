@@ -3,7 +3,7 @@ import { requireUser } from "@/lib/auth-helpers";
 import { PasswordForm } from "./password-form";
 
 export const metadata: Metadata = {
-  title: "Konto – Dienstplan",
+  title: "Konto – Eifel Wagyu",
 };
 
 export default async function KontoPage() {

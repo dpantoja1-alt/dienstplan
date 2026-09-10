@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { AddTemplate } from "./add-template";
 import { TemplateRow } from "./template-row";
 
-export const metadata: Metadata = { title: "Schichtvorlagen – Dienstplan" };
+export const metadata: Metadata = { title: "Schichtvorlagen – Eifel Wagyu" };
 
 export default async function SchichtvorlagenPage() {
   await requireAdmin();

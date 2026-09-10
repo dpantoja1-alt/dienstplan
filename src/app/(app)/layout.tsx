@@ -2,6 +2,7 @@ import Link from "next/link";
 import { signOut } from "@/auth";
 import { requireUser } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
+import { Logo } from "@/components/logo";
 import { NavLink } from "./nav-link";
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
@@ -18,11 +19,11 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="border-b border-slate-200 dark:border-slate-800">
+      <header className="border-b border-line bg-surface">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-3">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-            <Link href="/dashboard" className="font-semibold">
-              Dienstplan
+            <Link href="/dashboard" aria-label="Startseite">
+              <Logo size="sm" />
             </Link>
             <nav className="flex flex-wrap items-center gap-1 text-sm">
               <NavLink href="/dashboard">Übersicht</NavLink>

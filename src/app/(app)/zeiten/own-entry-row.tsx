@@ -31,7 +31,7 @@ function Badge({ children, className }: { children: React.ReactNode; className: 
 function CorrectionButton() {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" disabled={pending} className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-60 dark:bg-white dark:text-slate-900">
+    <button type="submit" disabled={pending} className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-brand-ink disabled:opacity-60">
       {pending ? "…" : "Korrektur einreichen"}
     </button>
   );

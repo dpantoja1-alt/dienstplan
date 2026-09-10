@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
-  title: "Mitarbeiter – Dienstplan",
+  title: "Mitarbeiter – Eifel Wagyu",
 };
 
 export default async function MitarbeiterPage() {
@@ -29,7 +29,7 @@ export default async function MitarbeiterPage() {
         <h1 className="text-2xl font-semibold">Mitarbeiter</h1>
         <Link
           href="/mitarbeiter/neu"
-          className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+          className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-brand-ink transition hover:bg-brand-strong"
         >
           + Mitarbeiter
         </Link>

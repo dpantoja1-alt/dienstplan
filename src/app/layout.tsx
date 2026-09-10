@@ -1,20 +1,32 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Barlow, Barlow_Semi_Condensed, Inter, Fraunces } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-body",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const barlow = Barlow({
+  variable: "--font-heading",
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+});
+
+const barlowCondensed = Barlow_Semi_Condensed({
+  variable: "--font-logo",
+  weight: ["600", "700"],
+  subsets: ["latin"],
+});
+
+const fraunces = Fraunces({
+  variable: "--font-accent",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
   title: {
-    default: "Dienstplan",
+    default: "Eifel Wagyu · Dienstplan",
     template: "%s",
   },
   description: "Dienstplan und Zeiterfassung für das Team",
@@ -24,9 +36,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="de"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${barlow.variable} ${barlowCondensed.variable} ${fraunces.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );
 }

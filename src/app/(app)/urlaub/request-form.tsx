@@ -13,7 +13,7 @@ function Submit() {
     <button
       type="submit"
       disabled={pending}
-      className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-slate-700 disabled:opacity-60 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+      className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-brand-ink transition hover:bg-brand-strong disabled:opacity-60"
     >
       {pending ? "Senden …" : "Antrag senden"}
     </button>
@@ -42,7 +42,7 @@ export function RequestForm() {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+        className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-brand-ink transition hover:bg-brand-strong"
       >
         Urlaub beantragen
       </button>

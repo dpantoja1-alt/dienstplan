@@ -9,7 +9,7 @@ import { MonthNav } from "./month-nav";
 import { AddEntry } from "./add-entry";
 import { OwnEntryRow } from "./own-entry-row";
 
-export const metadata: Metadata = { title: "Zeiten – Dienstplan" };
+export const metadata: Metadata = { title: "Zeiten – Eifel Wagyu" };
 
 export default async function ZeitenPage({
   searchParams,

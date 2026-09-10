@@ -15,7 +15,7 @@ import { PlanGrid } from "./plan-grid";
 import { WeekToolbar } from "./week-toolbar";
 import type { GridAbsence, GridIst, GridShift, GridTemplate } from "./types";
 
-export const metadata: Metadata = { title: "Plan – Dienstplan" };
+export const metadata: Metadata = { title: "Plan – Eifel Wagyu" };
 
 export default async function PlanPage({ searchParams }: PageProps<"/plan">) {
   const session = await requireUser();

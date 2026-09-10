@@ -9,7 +9,7 @@ import { formatMinutes } from "@/lib/worktime";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 
-export const metadata: Metadata = { title: "Stundenkonto – Dienstplan" };
+export const metadata: Metadata = { title: "Stundenkonto – Eifel Wagyu" };
 
 function parseMonth(m: string | undefined): { year: number; month1: number; key: string } {
   const now = new Date();
@@ -175,7 +175,7 @@ export default async function StundenkontoPage({
       <div className="flex flex-wrap gap-2">
         <a
           href={`/stundennachweis?m=${key}${targetUserId !== session.user.id ? `&u=${targetUserId}` : ""}`}
-          className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-slate-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+          className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-brand-ink transition hover:bg-brand-strong"
         >
           Stundennachweis (Druck / PDF)
         </a>

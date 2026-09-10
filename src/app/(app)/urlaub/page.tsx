@@ -14,7 +14,7 @@ import { RequestForm } from "./request-form";
 import { AdminAddAbsence } from "./admin-add-absence";
 import { AbsenceRow, type AbsenceView } from "./absence-row";
 
-export const metadata: Metadata = { title: "Urlaub – Dienstplan" };
+export const metadata: Metadata = { title: "Urlaub – Eifel Wagyu" };
 
 function YearNav({ year }: { year: number }) {
   return (

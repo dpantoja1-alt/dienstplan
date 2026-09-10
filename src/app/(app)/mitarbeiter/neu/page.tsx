@@ -5,7 +5,7 @@ import { createEmployee } from "../actions";
 import { EmployeeForm } from "../employee-form";
 
 export const metadata: Metadata = {
-  title: "Neuer Mitarbeiter – Dienstplan",
+  title: "Neuer Mitarbeiter – Eifel Wagyu",
 };
 
 export default async function NeuerMitarbeiterPage() {

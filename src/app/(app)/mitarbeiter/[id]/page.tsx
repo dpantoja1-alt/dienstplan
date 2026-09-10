@@ -12,7 +12,7 @@ import { ActiveToggle } from "./active-toggle";
 import { DeleteEmployee } from "./delete-employee";
 
 export const metadata: Metadata = {
-  title: "Mitarbeiter bearbeiten – Dienstplan",
+  title: "Mitarbeiter bearbeiten – Eifel Wagyu",
 };
 
 function toDateInput(d: Date | null): string {

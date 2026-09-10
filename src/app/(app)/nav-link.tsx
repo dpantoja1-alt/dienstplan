@@ -24,8 +24,8 @@ export function NavLink({
       className={
         "rounded-md px-2 py-1 transition " +
         (active
-          ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
-          : "hover:bg-slate-100 dark:hover:bg-slate-800")
+          ? "bg-brand font-medium text-brand-ink"
+          : "text-muted hover:bg-brand/10 hover:text-foreground")
       }
     >
       {children}

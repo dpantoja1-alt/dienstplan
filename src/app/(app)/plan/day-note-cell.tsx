@@ -48,7 +48,7 @@ export function DayNoteCell({
                 }
               })
             }
-            className="rounded bg-slate-900 px-2 py-0.5 text-xs text-white dark:bg-white dark:text-slate-900"
+            className="rounded bg-brand px-2 py-0.5 text-xs text-brand-ink"
           >
             OK
           </button>

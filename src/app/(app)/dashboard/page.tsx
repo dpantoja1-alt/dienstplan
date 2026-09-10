@@ -10,7 +10,7 @@ import { getMonthAccount, getVacationSummary } from "@/lib/account";
 import { format } from "date-fns";
 
 export const metadata: Metadata = {
-  title: "Übersicht – Dienstplan",
+  title: "Übersicht – Eifel Wagyu",
 };
 
 function Card({ href, value, label }: { href: string; value: string; label: string }) {

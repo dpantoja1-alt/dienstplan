@@ -6,7 +6,7 @@ import { getVacationSummary } from "@/lib/account";
 import { dateKey } from "@/lib/shift";
 import { AbsenceRow } from "../absence-row";
 
-export const metadata: Metadata = { title: "Urlaubsanträge – Dienstplan" };
+export const metadata: Metadata = { title: "Urlaubsanträge – Eifel Wagyu" };
 
 export default async function AntraegePage() {
   await requireAdmin();

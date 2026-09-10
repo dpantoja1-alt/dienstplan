@@ -3,10 +3,11 @@ import Link from "next/link";
 
 import { prisma } from "@/lib/prisma";
 import { hashInviteToken } from "@/lib/invite";
+import { Logo } from "@/components/logo";
 import { AcceptForm } from "./accept-form";
 
 export const metadata: Metadata = {
-  title: "Einladung – Dienstplan",
+  title: "Einladung – Eifel Wagyu",
 };
 
 export default async function InvitePage({
@@ -23,9 +24,12 @@ export default async function InvitePage({
     user && user.inviteExpiresAt && user.inviteExpiresAt > new Date();
 
   return (
-    <main className="flex min-h-dvh items-center justify-center p-4">
-      <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-        <h1 className="mb-1 text-xl font-semibold">Willkommen beim Dienstplan</h1>
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-8 p-4">
+      <Logo size="lg" />
+      <div className="w-full max-w-sm rounded-xl border border-line bg-surface p-6 shadow-sm">
+        <h1 className="mb-1 text-lg font-semibold [font-family:var(--font-accent)]">
+          Willkommen
+        </h1>
 
         {valid ? (
           <>

@@ -12,7 +12,7 @@ import { AdminEntryRow } from "@/app/(app)/zeiten/admin-entry-row";
 import { AdminAddEntry } from "@/app/(app)/zeiten/admin-add-entry";
 import { ConfirmAllButton } from "@/app/(app)/zeiten/confirm-all-button";
 
-export const metadata: Metadata = { title: "Zeiten – Dienstplan" };
+export const metadata: Metadata = { title: "Zeiten – Eifel Wagyu" };
 
 export default async function MitarbeiterZeitenPage({
   params,

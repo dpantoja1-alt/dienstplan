@@ -7,7 +7,7 @@ import { berlinTodayRange, dateToLocalInput } from "@/lib/time-zone";
 import { toViewEntry } from "@/lib/time-entry-view";
 import { TeamClockRow, type TeamRow } from "./team-clock-row";
 
-export const metadata: Metadata = { title: "Team-Zeiten – Dienstplan" };
+export const metadata: Metadata = { title: "Team-Zeiten – Eifel Wagyu" };
 
 export default async function TeamZeitenPage() {
   await requireAdmin();

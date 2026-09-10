@@ -7,7 +7,7 @@ import { formatDay } from "@/lib/time-zone";
 import { AdminEntryRow } from "../admin-entry-row";
 import { ConfirmAllButton } from "../confirm-all-button";
 
-export const metadata: Metadata = { title: "Zeiten prüfen – Dienstplan" };
+export const metadata: Metadata = { title: "Zeiten prüfen – Eifel Wagyu" };
 
 export default async function ZeitenPruefenPage() {
   await requireAdmin();
