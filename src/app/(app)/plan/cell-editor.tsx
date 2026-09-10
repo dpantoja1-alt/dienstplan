@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { formatShiftRange, minutesToHHMM } from "@/lib/shift";
-import { assignShiftFromTemplate, removeShift } from "./actions";
+import { assignShiftFromTemplate, removeShift, saveShiftAsTemplate } from "./actions";
 import { CustomShiftForm } from "./custom-shift-form";
 import type { GridShift, GridTemplate } from "./types";
 
@@ -25,10 +25,12 @@ export function CellEditor({
 }) {
   const [busy, start] = useTransition();
   const [err, setErr] = useState<string | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
   const [custom, setCustom] = useState<null | { shiftId?: string; defaults: GridShift | null }>(null);
 
   function run(fn: () => Promise<unknown>) {
     setErr(null);
+    setMsg(null);
     start(async () => {
       try {
         await fn();
@@ -62,6 +64,25 @@ export function CellEditor({
                 </span>
               </span>
               <span className="flex gap-2">
+                {!s.fromTemplate && (
+                  <button
+                    disabled={busy}
+                    onClick={() =>
+                      run(async () => {
+                        const res = await saveShiftAsTemplate(s.id);
+                        setMsg(
+                          res.created
+                            ? `„${s.label}“ als Vorlage gespeichert.`
+                            : `„${s.label}“ mit vorhandener Vorlage verknüpft.`,
+                        );
+                      })
+                    }
+                    className="text-slate-500 hover:underline dark:text-slate-400"
+                    title="Diese Zeit als wiederverwendbare Vorlage speichern"
+                  >
+                    Als Vorlage
+                  </button>
+                )}
                 <button
                   onClick={() =>
                     setCustom({ shiftId: s.id, defaults: s })
@@ -133,6 +154,7 @@ export function CellEditor({
       )}
 
       {err && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{err}</p>}
+      {msg && <p className="mt-2 text-sm text-emerald-700 dark:text-emerald-400">{msg}</p>}
     </div>
   );
 }

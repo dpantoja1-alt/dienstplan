@@ -11,6 +11,7 @@ export type GridShift = {
   breakMinutes: number | null;
   durationMinutes: number;
   note: string | null;
+  fromTemplate: boolean;
 };
 
 export type GridTemplate = {

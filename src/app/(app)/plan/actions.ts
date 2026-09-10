@@ -110,6 +110,7 @@ export async function saveCustomShift(
     return { error: parsed.error.issues[0]?.message ?? "Eingabe ungültig." };
   }
   const d = parsed.data;
+  const saveAsTemplate = formData.get("saveAsTemplate") === "on" && !d.shiftId;
 
   if (d.shiftId) {
     await prisma.shift.update({
@@ -125,10 +126,35 @@ export async function saveCustomShift(
       },
     });
   } else {
+    let templateId: string | null = null;
+    if (saveAsTemplate) {
+      const existing = await prisma.shiftTemplate.findFirst({
+        where: { name: { equals: d.label, mode: "insensitive" } },
+      });
+      if (existing) {
+        templateId = existing.id;
+      } else {
+        const count = await prisma.shiftTemplate.count();
+        const created = await prisma.shiftTemplate.create({
+          data: {
+            name: d.label,
+            shortLabel: d.label.slice(0, 12),
+            startMinutes: d.startMinutes,
+            endMinutes: d.endMinutes,
+            breakMinutes: d.breakMinutes,
+            color: d.color,
+            sortOrder: count,
+          },
+        });
+        templateId = created.id;
+      }
+    }
+
     await prisma.shift.create({
       data: {
         userId: d.userId,
         date: dateFromKey(d.dateKey),
+        templateId,
         label: d.label,
         startMinutes: d.startMinutes,
         endMinutes: d.endMinutes,
@@ -140,7 +166,42 @@ export async function saveCustomShift(
   }
   revalidatePath("/plan");
   revalidatePath("/dashboard");
+  revalidatePath("/schichtvorlagen");
   return { ok: true };
+}
+
+/** Eine bestehende (freie) Schicht als wiederverwendbare Vorlage speichern. */
+export async function saveShiftAsTemplate(
+  shiftId: string,
+): Promise<{ created: boolean }> {
+  await requireAdmin();
+  const shift = await prisma.shift.findUnique({ where: { id: shiftId } });
+  if (!shift) throw new Error("Schicht nicht gefunden.");
+
+  const existing = await prisma.shiftTemplate.findFirst({
+    where: { name: { equals: shift.label, mode: "insensitive" } },
+  });
+  if (existing) {
+    await prisma.shift.update({ where: { id: shiftId }, data: { templateId: existing.id } });
+    return { created: false };
+  }
+
+  const count = await prisma.shiftTemplate.count();
+  const template = await prisma.shiftTemplate.create({
+    data: {
+      name: shift.label,
+      shortLabel: shift.label.slice(0, 12),
+      startMinutes: shift.startMinutes,
+      endMinutes: shift.endMinutes,
+      breakMinutes: shift.breakMinutes,
+      color: shift.color,
+      sortOrder: count,
+    },
+  });
+  await prisma.shift.update({ where: { id: shiftId }, data: { templateId: template.id } });
+  revalidatePath("/plan");
+  revalidatePath("/schichtvorlagen");
+  return { created: true };
 }
 
 export async function removeShift(id: string) {

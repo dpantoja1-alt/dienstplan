@@ -82,6 +82,13 @@ export function CustomShiftForm({
         <input name="note" defaultValue={defaults.note} maxLength={200} className={inputCls} />
       </label>
 
+      {!defaults.shiftId && (
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" name="saveAsTemplate" />
+          Als Vorlage speichern (dann künftig als Knopf verfügbar)
+        </label>
+      )}
+
       {state.error && <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>}
 
       <div className="flex gap-2">

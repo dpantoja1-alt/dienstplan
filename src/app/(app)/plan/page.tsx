@@ -75,6 +75,7 @@ export default async function PlanPage({ searchParams }: PageProps<"/plan">) {
     breakMinutes: s.breakMinutes,
     durationMinutes: shiftDurationMinutes(s.startMinutes, s.endMinutes, s.breakMinutes),
     note: s.note,
+    fromTemplate: s.templateId !== null,
   }));
 
   const gridTemplates: GridTemplate[] = templates.map((t) => ({
