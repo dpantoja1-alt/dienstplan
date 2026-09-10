@@ -191,8 +191,11 @@ export default async function PlanPage({ searchParams }: PageProps<"/plan">) {
             →
           </Link>
           {week.key !== week.current && (
-            <Link href="/plan" className="ml-1 text-sm text-slate-500 hover:underline dark:text-slate-400">
-              heute
+            <Link
+              href="/plan"
+              className="ml-1 rounded-md bg-brand px-2.5 py-1 text-sm font-medium text-brand-ink transition hover:bg-brand-strong"
+            >
+              Aktuelle Woche
             </Link>
           )}
         </div>
