@@ -29,4 +29,13 @@ export type GridDay = {
   label: string; // "09.09."
   weekday: string; // "Di"
   isToday: boolean;
+  holiday: string | null; // Name des NRW-Feiertags
+};
+
+export type GridAbsence = {
+  userId: string;
+  dayKey: string;
+  type: "VACATION" | "SICK" | "OTHER";
+  label: string; // "Urlaub", "Krank", "Urlaub ½"
+  color: string;
 };

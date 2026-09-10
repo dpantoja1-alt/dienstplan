@@ -51,10 +51,11 @@ export default async function ZeitenPruefenPage() {
             </div>
             <ul className="divide-y divide-slate-100 dark:divide-slate-800/60">
               {group.entries.map((e) => (
-                <li key={e.id} className="px-1">
-                  <div className="px-2 pt-2 text-xs text-slate-400">{formatDay(e.start)}</div>
-                  <AdminEntryRow entry={toViewEntry(e, group.minBreak)} />
-                </li>
+                <AdminEntryRow
+                  key={e.id}
+                  entry={toViewEntry(e, group.minBreak)}
+                  dateLabel={formatDay(e.start)}
+                />
               ))}
             </ul>
           </div>

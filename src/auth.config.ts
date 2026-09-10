@@ -15,11 +15,9 @@ export const authConfig = {
       const isLoggedIn = !!auth?.user;
       const { pathname } = nextUrl;
 
-      // Öffentlich erreichbar (auch ohne Login).
+      // Öffentlich erreichbar (auch ohne Login). Die /login-Seite leitet
+      // angemeldete Nutzer selbst weiter (nach Prüfung, dass das Konto existiert).
       if (pathname === "/login" || pathname.startsWith("/invite")) {
-        if (isLoggedIn && pathname === "/login") {
-          return Response.redirect(new URL("/dashboard", nextUrl));
-        }
         return true;
       }
 

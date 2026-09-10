@@ -4,10 +4,13 @@ import type { Route } from "next";
 
 import { requireUser } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
-import { weekInfo, dateFromKey, formatShiftRange, shiftDurationMinutes } from "@/lib/shift";
+import { weekInfo, dateFromKey, dateKey, formatShiftRange, shiftDurationMinutes } from "@/lib/shift";
+import { nrwHolidayName } from "@/lib/holidays";
+import { isWorkday } from "@/lib/soll";
+import { absenceTypeColor, absenceTypeLabel } from "@/lib/absence-view";
 import { PlanGrid } from "./plan-grid";
 import { WeekToolbar } from "./week-toolbar";
-import type { GridShift, GridTemplate } from "./types";
+import type { GridAbsence, GridShift, GridTemplate } from "./types";
 
 export const metadata: Metadata = { title: "Plan – Dienstplan" };
 
@@ -20,7 +23,7 @@ export default async function PlanPage({ searchParams }: PageProps<"/plan">) {
   const monday = dateFromKey(week.key);
   const sunday = dateFromKey(week.days[6].key);
 
-  const [users, shiftRows, templates] = await Promise.all([
+  const [users, shiftRows, templates, absenceRows] = await Promise.all([
     prisma.user.findMany({
       where: { active: true },
       orderBy: [{ role: "asc" }, { name: "asc" }],
@@ -34,7 +37,32 @@ export default async function PlanPage({ searchParams }: PageProps<"/plan">) {
       where: { active: true },
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     }),
+    prisma.absence.findMany({
+      where: {
+        status: "APPROVED",
+        startDate: { lte: sunday },
+        endDate: { gte: monday },
+      },
+      select: { userId: true, type: true, startDate: true, endDate: true, halfDay: true },
+    }),
   ]);
+
+  const gridAbsences: GridAbsence[] = [];
+  for (const a of absenceRows) {
+    const from = dateKey(a.startDate);
+    const to = dateKey(a.endDate);
+    const single = from === to;
+    for (const d of week.days) {
+      if (d.key < from || d.key > to || !isWorkday(d.key)) continue;
+      gridAbsences.push({
+        userId: a.userId,
+        dayKey: d.key,
+        type: a.type,
+        label: `${absenceTypeLabel(a.type)}${a.halfDay && single ? " ½" : ""}`,
+        color: absenceTypeColor(a.type),
+      });
+    }
+  }
 
   const gridShifts: GridShift[] = shiftRows.map((s) => ({
     id: s.id,
@@ -101,8 +129,10 @@ export default async function PlanPage({ searchParams }: PageProps<"/plan">) {
           label: d.label,
           weekday: d.weekday,
           isToday: d.isToday,
+          holiday: nrwHolidayName(d.key),
         }))}
         shifts={gridShifts}
+        absences={gridAbsences}
         templates={gridTemplates}
         canEdit={isAdmin}
       />

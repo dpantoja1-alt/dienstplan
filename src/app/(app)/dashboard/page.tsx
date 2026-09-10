@@ -6,6 +6,7 @@ import { monthRange } from "@/lib/time-zone";
 import { groupByDay } from "@/lib/time-entry-view";
 import { formatMinutes } from "@/lib/worktime";
 import { dateFromKey, formatFullDay, formatShiftRange } from "@/lib/shift";
+import { getMonthAccount, getVacationSummary } from "@/lib/account";
 import { format } from "date-fns";
 
 export const metadata: Metadata = {
@@ -66,11 +67,14 @@ export default async function DashboardPage() {
   const month = monthRange();
   const todayKey = format(new Date(), "yyyy-MM-dd");
 
+  const nowYear = new Date().getFullYear();
+  const nowMonth1 = new Date().getMonth() + 1;
+
   if (isAdmin) {
-    const [employeeCount, openInvites, pendingReviews, todayShifts] = await Promise.all([
-      prisma.user.count({ where: { role: "EMPLOYEE" } }),
+    const [openInvites, pendingReviews, pendingAbsences, todayShifts] = await Promise.all([
       prisma.user.count({ where: { passwordHash: null } }),
       prisma.timeEntry.count({ where: { status: "PENDING", end: { not: null } } }),
+      prisma.absence.count({ where: { status: "PENDING" } }),
       prisma.shift.count({ where: { date: dateFromKey(todayKey) } }),
     ]);
 
@@ -78,18 +82,14 @@ export default async function DashboardPage() {
       <div>
         <h1 className="text-2xl font-semibold">Hallo {firstName} 👋</h1>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Card href="/zeiten/pruefen" value={String(pendingReviews)} label="Zeiten zu prüfen" />
+          <Card href="/urlaub/antraege" value={String(pendingAbsences)} label="Urlaubsanträge" />
+          <Card href="/plan" value={String(todayShifts)} label="Schichten heute" />
           <Card
             href="/mitarbeiter"
-            value={String(employeeCount)}
-            label={
-              openInvites > 0
-                ? `Mitarbeiter · ${openInvites} offen`
-                : "Mitarbeiter"
-            }
+            value={openInvites > 0 ? String(openInvites) : "→"}
+            label={openInvites > 0 ? "offene Einladungen" : "Mitarbeiter"}
           />
-          <Card href="/zeiten/pruefen" value={String(pendingReviews)} label="Zeiten zu prüfen" />
-          <Card href="/plan" value={String(todayShifts)} label="Schichten heute" />
-          <Card href="/zeiten" value="→" label="Meine Zeiterfassung" />
         </div>
 
         <h2 className="mt-8 text-lg font-semibold">Meine nächsten Schichten</h2>
@@ -98,7 +98,7 @@ export default async function DashboardPage() {
     );
   }
 
-  const [openEntry, entries, me] = await Promise.all([
+  const [openEntry, entries, me, vacation, account] = await Promise.all([
     prisma.timeEntry.findFirst({ where: { userId: user.id, end: null } }),
     prisma.timeEntry.findMany({
       where: { userId: user.id, start: { gte: month.start, lte: month.end } },
@@ -107,18 +107,26 @@ export default async function DashboardPage() {
       where: { id: user.id },
       select: { minBreakMinutes: true },
     }),
+    getVacationSummary(user.id, nowYear),
+    getMonthAccount(user.id, nowYear, nowMonth1),
   ]);
   const { totalNet } = groupByDay(entries, me?.minBreakMinutes ?? 0);
 
   return (
     <div>
       <h1 className="text-2xl font-semibold">Hallo {firstName} 👋</h1>
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card
           href="/zeiten"
           value={openEntry ? "läuft" : formatMinutes(totalNet)}
           label={openEntry ? "Zeiterfassung aktiv" : "Erfasst diesen Monat"}
         />
+        <Card
+          href="/stundenkonto"
+          value={formatMinutes(account.balanceMinutes)}
+          label="Saldo diesen Monat"
+        />
+        <Card href="/urlaub" value={String(vacation.remaining)} label="Resturlaub (Tage)" />
         <Card href="/plan" value="→" label="Dienstplan ansehen" />
       </div>
 

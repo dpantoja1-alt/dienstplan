@@ -9,9 +9,11 @@ import { EntryForm } from "./entry-form";
 export function AdminEntryRow({
   entry,
   showConfirm = true,
+  dateLabel,
 }: {
   entry: ViewEntry;
   showConfirm?: boolean;
+  dateLabel?: string;
 }) {
   const [mode, setMode] = useState<"view" | "edit" | "confirmDelete">("view");
   const [busy, start] = useTransition();
@@ -38,6 +40,9 @@ export function AdminEntryRow({
 
   return (
     <li className="px-3 py-2">
+      {dateLabel && (
+        <div className="pb-1 text-xs text-slate-400">{dateLabel}</div>
+      )}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-sm">
           <span className="font-medium tabular-nums">

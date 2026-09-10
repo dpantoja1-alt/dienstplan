@@ -25,6 +25,18 @@ enum TimeEntryStatus {
   CONFIRMED // vom Admin bestätigt – für den Mitarbeiter gesperrt
 }
 
+enum AbsenceType {
+  VACATION // Urlaub – reduziert den Jahresanspruch
+  SICK // Krankheit
+  OTHER // Sonstiges / unbezahlt
+}
+
+enum AbsenceStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
   id           String  @id @default(cuid())
   email        String  @unique
@@ -46,9 +58,31 @@ model User {
 
   timeEntries TimeEntry[]
   shifts      Shift[]
+  absences    Absence[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/// Abwesenheit (Urlaub, Krankheit, Sonstiges) über einen Zeitraum.
+model Absence {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type      AbsenceType
+  startDate DateTime      @db.Date
+  endDate   DateTime      @db.Date // einschließlich
+  halfDay   Boolean       @default(false) // nur sinnvoll bei startDate == endDate
+  status    AbsenceStatus @default(PENDING)
+  note      String?
+  decidedAt DateTime? // Zeitpunkt der Genehmigung/Ablehnung
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, startDate])
+  @@index([status])
 }
 
 /// Wiederverwendbare Schichtvorlage, z. B. "Früh 06:00–14:00".

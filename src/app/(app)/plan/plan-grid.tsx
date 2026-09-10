@@ -4,18 +4,20 @@ import { useMemo, useState } from "react";
 import { formatMinutes } from "@/lib/worktime";
 import { formatShiftRange } from "@/lib/shift";
 import { CellEditor } from "./cell-editor";
-import type { GridDay, GridShift, GridTemplate, GridUser } from "./types";
+import type { GridAbsence, GridDay, GridShift, GridTemplate, GridUser } from "./types";
 
 export function PlanGrid({
   users,
   days,
   shifts,
+  absences,
   templates,
   canEdit,
 }: {
   users: GridUser[];
   days: GridDay[];
   shifts: GridShift[];
+  absences: GridAbsence[];
   templates: GridTemplate[];
   canEdit: boolean;
 }) {
@@ -32,6 +34,12 @@ export function PlanGrid({
     for (const arr of map.values()) arr.sort((a, b) => a.startMinutes - b.startMinutes);
     return map;
   }, [shifts]);
+
+  const absenceByCell = useMemo(() => {
+    const map = new Map<string, GridAbsence>();
+    for (const a of absences) map.set(`${a.userId}|${a.dayKey}`, a);
+    return map;
+  }, [absences]);
 
   const weekTotals = useMemo(() => {
     const m = new Map<string, number>();
@@ -57,6 +65,11 @@ export function PlanGrid({
                 >
                   <div>{d.weekday}</div>
                   <div className="text-xs font-normal">{d.label}</div>
+                  {d.holiday && (
+                    <div className="mt-0.5 text-[10px] font-normal leading-tight text-rose-600 dark:text-rose-400">
+                      {d.holiday}
+                    </div>
+                  )}
                 </th>
               ))}
             </tr>
@@ -74,16 +87,27 @@ export function PlanGrid({
                 </th>
                 {days.map((d) => {
                   const cellShifts = byCell.get(`${u.id}|${d.key}`) ?? [];
+                  const absence = absenceByCell.get(`${u.id}|${d.key}`);
                   const isSel = sel?.userId === u.id && sel?.dayKey === d.key;
                   return (
                     <td
                       key={d.key}
                       onClick={canEdit ? () => setSel({ userId: u.id, dayKey: d.key }) : undefined}
                       className={`border-l border-slate-100 p-1 align-top dark:border-slate-800/60 ${
+                        d.holiday ? "bg-rose-50/50 dark:bg-rose-950/20" : ""
+                      } ${
                         canEdit ? "cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900" : ""
                       } ${isSel ? "outline outline-2 outline-slate-900 dark:outline-white" : ""}`}
                     >
                       <div className="flex flex-col gap-1">
+                        {absence && (
+                          <div
+                            className="rounded border px-1.5 py-1 text-xs font-medium leading-tight"
+                            style={{ borderColor: absence.color, color: absence.color }}
+                          >
+                            {absence.label}
+                          </div>
+                        )}
                         {cellShifts.map((s) => (
                           <div
                             key={s.id}
@@ -97,7 +121,7 @@ export function PlanGrid({
                             </div>
                           </div>
                         ))}
-                        {canEdit && cellShifts.length === 0 && (
+                        {canEdit && cellShifts.length === 0 && !absence && (
                           <span className="block py-1 text-center text-xs text-slate-300 dark:text-slate-600">
                             +
                           </span>

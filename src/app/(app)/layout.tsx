@@ -9,24 +9,34 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   const { name, role } = session.user;
   const isAdmin = role === "ADMIN";
 
-  const pendingReviews = isAdmin
-    ? await prisma.timeEntry.count({
-        where: { status: "PENDING", end: { not: null } },
-      })
-    : 0;
+  const [pendingReviews, pendingAbsences] = isAdmin
+    ? await Promise.all([
+        prisma.timeEntry.count({ where: { status: "PENDING", end: { not: null } } }),
+        prisma.absence.count({ where: { status: "PENDING" } }),
+      ])
+    : [0, 0];
 
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="border-b border-slate-200 dark:border-slate-800">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-3">
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
             <Link href="/dashboard" className="font-semibold">
               Dienstplan
             </Link>
-            <nav className="flex items-center gap-1 text-sm">
+            <nav className="flex flex-wrap items-center gap-1 text-sm">
               <NavLink href="/dashboard">Übersicht</NavLink>
               <NavLink href="/plan">Plan</NavLink>
               <NavLink href="/zeiten" exact>Zeiten</NavLink>
+              <NavLink href="/urlaub">
+                Urlaub
+                {pendingAbsences > 0 && (
+                  <span className="ml-1 rounded-full bg-amber-500 px-1.5 text-xs text-white">
+                    {pendingAbsences}
+                  </span>
+                )}
+              </NavLink>
+              <NavLink href="/stundenkonto">Stundenkonto</NavLink>
               {isAdmin && <NavLink href="/mitarbeiter">Mitarbeiter</NavLink>}
               {isAdmin && (
                 <NavLink href="/zeiten/pruefen">
@@ -38,13 +48,12 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
                   )}
                 </NavLink>
               )}
-              <NavLink href="/konto">Konto</NavLink>
             </nav>
           </div>
           <div className="flex items-center gap-3 text-sm">
-            <span className="text-slate-500 dark:text-slate-400">
+            <Link href="/konto" className="text-slate-500 hover:underline dark:text-slate-400">
               {name} · {isAdmin ? "Admin" : "Mitarbeiter"}
-            </span>
+            </Link>
             <form
               action={async () => {
                 "use server";
