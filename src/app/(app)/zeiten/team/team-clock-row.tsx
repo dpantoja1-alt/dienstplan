@@ -3,8 +3,26 @@
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { formatMinutes } from "@/lib/worktime";
-import { adminClockIn, adminClockOut, adminSaveEntry } from "../actions";
+import {
+  adminClockIn,
+  adminClockOut,
+  adminDeleteEntry,
+  adminSaveEntry,
+} from "../actions";
 import { EntryForm } from "../entry-form";
+
+type TodayEntry = {
+  id: string;
+  startTime: string;
+  endTime: string | null;
+  netMinutes: number | null;
+  status: "PENDING" | "CONFIRMED";
+  startInput: string;
+  endInput: string;
+  breakOverride: string;
+  note: string;
+  running: boolean;
+};
 
 export type TeamRow = {
   userId: string;
@@ -12,15 +30,82 @@ export type TeamRow = {
   role: "ADMIN" | "EMPLOYEE";
   openSinceISO: string | null;
   todayNetMinutes: number;
-  todayEntries: {
-    id: string;
-    startTime: string;
-    endTime: string | null;
-    netMinutes: number | null;
-    status: "PENDING" | "CONFIRMED";
-  }[];
+  todayEntries: TodayEntry[];
   defaultStart: string;
 };
+
+function TodayEntryItem({ userId, entry }: { userId: string; entry: TodayEntry }) {
+  const [mode, setMode] = useState<"view" | "edit" | "confirmDelete">("view");
+  const [busy, startT] = useTransition();
+  const [err, setErr] = useState<string | null>(null);
+
+  function run(fn: () => Promise<unknown>) {
+    setErr(null);
+    startT(async () => {
+      try {
+        await fn();
+      } catch (e) {
+        setErr(e instanceof Error ? e.message : "Fehler");
+        setMode("view");
+      }
+    });
+  }
+
+  if (mode === "edit") {
+    return (
+      <li className="mt-1">
+        <EntryForm
+          action={adminSaveEntry}
+          hidden={{ userId, entryId: entry.id }}
+          submitLabel="Übernehmen"
+          defaults={{
+            start: entry.startInput,
+            end: entry.endInput,
+            breakMinutes: entry.breakOverride,
+            note: entry.note,
+          }}
+          onDone={() => setMode("view")}
+          onCancel={() => setMode("view")}
+        />
+      </li>
+    );
+  }
+
+  return (
+    <li className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
+      <span className="tabular-nums">
+        {entry.startTime}
+        {entry.endTime ? `–${entry.endTime}` : " …"}
+        {entry.netMinutes != null && ` (${formatMinutes(entry.netMinutes)})`}
+        {entry.status === "PENDING" && " · offen"}
+      </span>
+      {!entry.running && mode === "view" && (
+        <>
+          <button onClick={() => setMode("edit")} className="text-slate-500 hover:underline dark:text-slate-400">
+            Ändern
+          </button>
+          <button onClick={() => setMode("confirmDelete")} className="text-red-600 hover:underline dark:text-red-400">
+            Löschen
+          </button>
+        </>
+      )}
+      {mode === "confirmDelete" && (
+        <span className="flex items-center gap-1.5">
+          wirklich löschen?
+          <button
+            disabled={busy}
+            onClick={() => run(() => adminDeleteEntry(entry.id))}
+            className="rounded bg-red-600 px-1.5 py-0.5 text-white"
+          >
+            Ja
+          </button>
+          <button onClick={() => setMode("view")} className="hover:underline">Nein</button>
+        </span>
+      )}
+      {err && <span className="text-red-600 dark:text-red-400">{err}</span>}
+    </li>
+  );
+}
 
 export function TeamClockRow({ row }: { row: TeamRow }) {
   const [pending, startT] = useTransition();
@@ -112,13 +197,9 @@ export function TeamClockRow({ row }: { row: TeamRow }) {
       </div>
 
       {row.todayEntries.length > 0 && (
-        <ul className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
+        <ul className="mt-1.5 flex flex-col gap-1">
           {row.todayEntries.map((e) => (
-            <li key={e.id} className="tabular-nums">
-              {e.startTime}{e.endTime ? `–${e.endTime}` : " …"}
-              {e.netMinutes != null && ` (${formatMinutes(e.netMinutes)})`}
-              {e.status === "PENDING" && " · offen"}
-            </li>
+            <TodayEntryItem key={e.id} userId={row.userId} entry={e} />
           ))}
         </ul>
       )}

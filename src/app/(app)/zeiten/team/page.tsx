@@ -46,6 +46,11 @@ export default async function TeamZeitenPage() {
           endTime: v.endTime,
           netMinutes: v.netMinutes,
           status: e.status,
+          startInput: v.startInput,
+          endInput: v.endInput ?? "",
+          breakOverride: v.breakOverride?.toString() ?? "",
+          note: v.note ?? "",
+          running: v.running,
         };
       });
     const todayNet = todays.reduce((s, e) => s + (e.netMinutes ?? 0), 0);

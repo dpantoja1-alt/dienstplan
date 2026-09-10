@@ -218,7 +218,11 @@ export async function adminSaveEntry(
   }
 
   if (entryId) {
-    await prisma.timeEntry.update({ where: { id: entryId }, data: parsed.data });
+    // Die Änderung des Admins ist maßgeblich → sofort bestätigt, Korrekturhinweis weg.
+    await prisma.timeEntry.update({
+      where: { id: entryId },
+      data: { ...parsed.data, status: "CONFIRMED", correctionNote: null },
+    });
   } else {
     if (!userId) return { error: "Kein Mitarbeiter gewählt." };
     await prisma.timeEntry.create({
