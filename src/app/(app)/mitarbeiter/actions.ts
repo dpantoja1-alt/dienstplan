@@ -180,6 +180,49 @@ export async function setEmployeeActive(id: string, active: boolean) {
   revalidatePath(`/mitarbeiter/${id}`);
 }
 
+/** Zählt, was beim Löschen mit entfernt würde. */
+export async function employeeDeletionImpact(id: string): Promise<{
+  timeEntries: number;
+  shifts: number;
+  absences: number;
+}> {
+  await requireAdmin();
+  const [timeEntries, shifts, absences] = await Promise.all([
+    prisma.timeEntry.count({ where: { userId: id } }),
+    prisma.shift.count({ where: { userId: id } }),
+    prisma.absence.count({ where: { userId: id } }),
+  ]);
+  return { timeEntries, shifts, absences };
+}
+
+export async function deleteEmployee(id: string) {
+  const session = await requireAdmin();
+  if (session.user.id === id) {
+    throw new Error("Du kannst dein eigenes Konto nicht löschen.");
+  }
+
+  const target = await prisma.user.findUnique({
+    where: { id },
+    select: { role: true },
+  });
+  if (!target) throw new Error("Mitarbeiter nicht gefunden.");
+
+  if (target.role === "ADMIN") {
+    const adminCount = await prisma.user.count({ where: { role: "ADMIN" } });
+    if (adminCount <= 1) {
+      throw new Error("Der letzte Admin kann nicht gelöscht werden.");
+    }
+  }
+
+  // Zeiterfassung, Schichten und Abwesenheiten werden per Cascade mitgelöscht.
+  await prisma.user.delete({ where: { id } });
+
+  revalidatePath("/mitarbeiter");
+  revalidatePath("/plan");
+  revalidatePath("/zeiten/team");
+  redirect("/mitarbeiter");
+}
+
 /** Erzeugt einen frischen Einladungslink (z. B. wenn der alte abgelaufen ist). */
 export async function regenerateInvite(id: string): Promise<{ url: string }> {
   await requireAdmin();

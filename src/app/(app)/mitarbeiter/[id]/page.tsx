@@ -9,6 +9,7 @@ import { updateEmployee } from "../actions";
 import { EmployeeForm } from "../employee-form";
 import { InvitePanel } from "./invite-panel";
 import { ActiveToggle } from "./active-toggle";
+import { DeleteEmployee } from "./delete-employee";
 
 export const metadata: Metadata = {
   title: "Mitarbeiter bearbeiten – Dienstplan",
@@ -28,6 +29,12 @@ export default async function MitarbeiterDetailPage({
 
   const user = await prisma.user.findUnique({ where: { id } });
   if (!user) notFound();
+
+  const [teCount, shCount, abCount] = await Promise.all([
+    prisma.timeEntry.count({ where: { userId: id } }),
+    prisma.shift.count({ where: { userId: id } }),
+    prisma.absence.count({ where: { userId: id } }),
+  ]);
 
   const isSelf = session.user.id === user.id;
   const isPending = !user.passwordHash;
@@ -91,6 +98,14 @@ export default async function MitarbeiterDetailPage({
           monthlySalary: user.monthlySalary?.toString() ?? "",
         }}
       />
+
+      {!isSelf && (
+        <DeleteEmployee
+          userId={user.id}
+          name={user.name}
+          impact={{ timeEntries: teCount, shifts: shCount, absences: abCount }}
+        />
+      )}
     </div>
   );
 }
