@@ -45,7 +45,7 @@ export async function getMonthAccount(
   const { start, end } = monthRangeKeys(year, month1);
   const tzMonth = monthRange(`${year}-${String(month1).padStart(2, "0")}`);
 
-  const [absences, entries] = await Promise.all([
+  const [absences, entries, adjustments] = await Promise.all([
     prisma.absence.findMany({
       where: {
         userId,
@@ -63,9 +63,20 @@ export async function getMonthAccount(
         start: { gte: tzMonth.start, lte: tzMonth.end },
       },
     }),
+    prisma.balanceAdjustment.findMany({
+      where: {
+        userId,
+        date: {
+          gte: new Date(`${start}T00:00:00.000Z`),
+          lte: new Date(`${end}T00:00:00.000Z`),
+        },
+      },
+      select: { minutes: true },
+    }),
   ]);
 
   const { totalNet } = groupByDay(entries, user.minBreakMinutes);
+  const adjustmentMinutes = adjustments.reduce((s, a) => s + a.minutes, 0);
 
   return monthAccount({
     year,
@@ -74,6 +85,7 @@ export async function getMonthAccount(
     workDaysPerWeek: user.workDaysPerWeek,
     absences: toSpans(absences),
     workedMinutes: totalNet,
+    adjustmentMinutes,
   });
 }
 
@@ -90,7 +102,7 @@ export async function getCumulativeBalance(
   let m = fromMonth1;
   while (y < toYear || (y === toYear && m <= toMonth1)) {
     const acc = await getMonthAccount(userId, y, m);
-    sum += acc.balanceMinutes;
+    sum += acc.balanceWithAdjustmentsMinutes;
     m += 1;
     if (m > 12) {
       m = 1;

@@ -104,6 +104,12 @@ export default async function StundennachweisPage({
             value={`${formatMinutes(t.creditedMinutes)} (${decimal(t.creditedMinutes)})`}
           />
           <Row label="Saldo Monat" value={formatMinutes(t.balanceMinutes)} strong />
+          {t.adjustmentMinutes !== 0 && (
+            <Row
+              label="Überstunden ausgezahlt / Korrektur"
+              value={formatMinutes(t.adjustmentMinutes)}
+            />
+          )}
           <Row label="Saldo gesamt" value={formatMinutes(t.cumulativeMinutes)} strong />
         </tbody>
       </table>

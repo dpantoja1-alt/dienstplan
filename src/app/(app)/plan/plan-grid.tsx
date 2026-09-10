@@ -16,6 +16,13 @@ import type {
   GridUser,
 } from "./types";
 
+/** Kompakte Stundenanzeige für die schmalen Summen-Spalten: 452 → "7:32" */
+function hm(total: number): string {
+  const sign = total < 0 ? "-" : "";
+  const abs = Math.abs(Math.round(total));
+  return `${sign}${Math.floor(abs / 60)}:${String(abs % 60).padStart(2, "0")}`;
+}
+
 function useToggle(key: string): [boolean, () => void] {
   const [on, setOn] = useState(false);
   useEffect(() => {
@@ -94,6 +101,31 @@ export function PlanGrid({
     return m;
   }, [shifts]);
 
+  // Ist-Minuten und Kosten je Mitarbeiter über die ganze Woche
+  const weekIst = useMemo(() => {
+    const min = new Map<string, number>();
+    const cost = new Map<string, number>();
+    for (const i of ist) {
+      min.set(i.userId, (min.get(i.userId) ?? 0) + i.netMinutes);
+      if (i.cost != null) cost.set(i.userId, (cost.get(i.userId) ?? 0) + i.cost);
+    }
+    return { min, cost };
+  }, [ist]);
+
+  const summary = useMemo(() => {
+    let soll = 0;
+    let geplant = 0;
+    let istMin = 0;
+    let kosten = 0;
+    for (const u of users) {
+      soll += u.sollMinutes;
+      geplant += weekTotals.get(u.id) ?? 0;
+      istMin += weekIst.min.get(u.id) ?? 0;
+      kosten += Math.round(weekIst.cost.get(u.id) ?? 0);
+    }
+    return { soll, geplant, istMin, kosten };
+  }, [users, weekTotals, weekIst]);
+
   const dayCostTotals = useMemo(() => {
     const m = new Map<string, number>();
     for (const i of ist) {
@@ -119,6 +151,12 @@ export function PlanGrid({
   const hasAnyNote = dayNotes.some((n) => n.text);
   const showNoteRow = canEdit || hasAnyNote;
 
+  const showIstCol = canEdit;
+  const showKostenCol = canEdit && showCost;
+  // Anzahl der Zusammenfassungs-Spalten rechts (für Leerzellen in anderen Zeilen)
+  const rightCols = 2 + (showIstCol ? 1 : 0) + (showKostenCol ? 1 : 0);
+  const emptyRight = Array.from({ length: rightCols });
+
   return (
     <div>
       {canEdit && (
@@ -140,7 +178,9 @@ export function PlanGrid({
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr>
-              <th className="sticky left-0 z-10 bg-[var(--background,#fafafa)] p-2 text-left dark:bg-slate-950" />
+              <th className="sticky left-0 z-10 bg-[var(--background,#fafafa)] p-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-950 dark:text-slate-400">
+                Mitarbeiter
+              </th>
               {days.map((d) => (
                 <th
                   key={d.key}
@@ -155,6 +195,22 @@ export function PlanGrid({
                   )}
                 </th>
               ))}
+              <th className="min-w-16 border-l-2 border-slate-300 p-2 text-center text-xs font-semibold text-slate-500 dark:border-slate-600 dark:text-slate-400">
+                Soll
+              </th>
+              <th className="min-w-16 border-l border-slate-200 p-2 text-center text-xs font-semibold text-slate-500 dark:border-slate-800/60 dark:text-slate-400">
+                Geplant
+              </th>
+              {showIstCol && (
+                <th className="min-w-16 border-l border-slate-200 p-2 text-center text-xs font-semibold text-slate-500 dark:border-slate-800/60 dark:text-slate-400">
+                  Ist
+                </th>
+              )}
+              {showKostenCol && (
+                <th className="min-w-16 border-l border-slate-200 p-2 text-center text-xs font-semibold text-slate-500 dark:border-slate-800/60 dark:text-slate-400">
+                  Kosten
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -171,18 +227,21 @@ export function PlanGrid({
                     <DayNoteCell dayKey={d.key} text={noteByDay.get(d.key) ?? ""} canEdit={canEdit} />
                   </td>
                 ))}
+                {emptyRight.map((_, i) => (
+                  <td
+                    key={i}
+                    className={`${i === 0 ? "border-l-2 border-slate-300 dark:border-slate-600" : "border-l border-slate-100 dark:border-slate-800/60"}`}
+                  />
+                ))}
               </tr>
             )}
 
             {users.map((u) => (
               <tr key={u.id} className="border-t border-slate-200 dark:border-slate-800">
-                <th className="sticky left-0 z-10 max-w-40 bg-[var(--background,#fafafa)] p-2 text-left align-top dark:bg-slate-950">
-                  <div className={`font-medium ${u.isSelf ? "text-sky-700 dark:text-sky-400" : ""}`}>
+                <th className="sticky left-0 z-10 max-w-40 bg-[var(--background,#fafafa)] p-2 text-left align-top font-medium dark:bg-slate-950">
+                  <span className={u.isSelf ? "text-sky-700 dark:text-sky-400" : ""}>
                     {u.name}
-                  </div>
-                  <div className="text-xs font-normal text-slate-400">
-                    {formatMinutes(weekTotals.get(u.id) ?? 0)}
-                  </div>
+                  </span>
                 </th>
                 {days.map((d) => {
                   const cellShifts = byCell.get(`${u.id}|${d.key}`) ?? [];
@@ -240,30 +299,102 @@ export function PlanGrid({
                     </td>
                   );
                 })}
+
+                {(() => {
+                  const soll = u.sollMinutes;
+                  const geplant = weekTotals.get(u.id) ?? 0;
+                  const istMin = weekIst.min.get(u.id) ?? 0;
+                  const kosten = weekIst.cost.get(u.id) ?? 0;
+                  return (
+                    <>
+                      <td className="border-l-2 border-slate-300 p-2 text-center text-xs tabular-nums whitespace-nowrap text-slate-600 dark:border-slate-600 dark:text-slate-300">
+                        {hm(soll)}
+                      </td>
+                      <td
+                        className={`border-l border-slate-100 p-2 text-center text-xs tabular-nums whitespace-nowrap dark:border-slate-800/60 ${
+                          geplant < soll ? "text-amber-600 dark:text-amber-400" : "text-slate-600 dark:text-slate-300"
+                        }`}
+                      >
+                        {hm(geplant)}
+                      </td>
+                      {showIstCol && (
+                        <td
+                          className={`border-l border-slate-100 p-2 text-center text-xs font-medium tabular-nums whitespace-nowrap dark:border-slate-800/60 ${
+                            istMin === 0
+                              ? "text-slate-400"
+                              : istMin + 1 < soll
+                                ? "text-amber-600 dark:text-amber-400"
+                                : "text-emerald-700 dark:text-emerald-400"
+                          }`}
+                        >
+                          {istMin === 0 ? "–" : hm(istMin)}
+                        </td>
+                      )}
+                      {showKostenCol && (
+                        <td className="border-l border-slate-100 p-2 text-center text-xs tabular-nums whitespace-nowrap text-slate-600 dark:border-slate-800/60 dark:text-slate-300">
+                          {kosten > 0 ? formatEuro(kosten) : ""}
+                        </td>
+                      )}
+                    </>
+                  );
+                })()}
               </tr>
             ))}
 
             {canEdit && showCost && dayCostTotals.total > 0 && (
-              <tr className="border-t-2 border-slate-300 dark:border-slate-700">
-                <th className="sticky left-0 z-10 bg-[var(--background,#fafafa)] p-2 text-left text-xs font-semibold dark:bg-slate-950">
+              <tr className="border-t border-slate-200 dark:border-slate-800/60">
+                <th className="sticky left-0 z-10 bg-[var(--background,#fafafa)] p-2 text-left text-xs font-medium text-slate-500 dark:bg-slate-950 dark:text-slate-400">
                   Kosten/Tag
                 </th>
                 {days.map((d) => (
-                  <td key={d.key} className="border-l border-slate-100 p-1.5 text-center text-xs font-semibold tabular-nums dark:border-slate-800/60">
+                  <td key={d.key} className="border-l border-slate-100 p-1.5 text-center text-xs tabular-nums dark:border-slate-800/60">
                     {dayCostTotals.byDay.get(d.key)
                       ? formatEuro(dayCostTotals.byDay.get(d.key)!)
                       : ""}
                   </td>
                 ))}
+                {emptyRight.map((_, i) => (
+                  <td
+                    key={i}
+                    className={`${i === 0 ? "border-l-2 border-slate-300 dark:border-slate-600" : "border-l border-slate-100 dark:border-slate-800/60"}`}
+                  />
+                ))}
+              </tr>
+            )}
+
+            {users.length > 0 && (
+              <tr className="border-t-2 border-slate-300 dark:border-slate-700">
+                <th className="sticky left-0 z-10 bg-[var(--background,#fafafa)] p-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-950 dark:text-slate-400">
+                  Gesamt
+                </th>
+                {days.map((d) => (
+                  <td key={d.key} className="border-l border-slate-100 dark:border-slate-800/60" />
+                ))}
+                <td className="border-l-2 border-slate-300 p-2 text-center text-xs font-semibold tabular-nums whitespace-nowrap dark:border-slate-600">
+                  {hm(summary.soll)}
+                </td>
+                <td className="border-l border-slate-200 p-2 text-center text-xs font-semibold tabular-nums whitespace-nowrap dark:border-slate-800/60">
+                  {hm(summary.geplant)}
+                </td>
+                {showIstCol && (
+                  <td className="border-l border-slate-200 p-2 text-center text-xs font-semibold tabular-nums whitespace-nowrap dark:border-slate-800/60">
+                    {hm(summary.istMin)}
+                  </td>
+                )}
+                {showKostenCol && (
+                  <td className="border-l border-slate-200 p-2 text-center text-xs font-semibold tabular-nums whitespace-nowrap dark:border-slate-800/60">
+                    {formatEuro(summary.kosten)}
+                  </td>
+                )}
               </tr>
             )}
           </tbody>
         </table>
       </div>
 
-      {canEdit && showCost && dayCostTotals.total > 0 && (
+      {showKostenCol && summary.kosten > 0 && (
         <p className="mt-2 text-sm font-semibold">
-          Kosten Woche gesamt: {formatEuro(dayCostTotals.total)}
+          Kosten Woche gesamt: {formatEuro(summary.kosten)}
         </p>
       )}
 

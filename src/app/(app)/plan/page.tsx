@@ -6,7 +6,13 @@ import { requireUser } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { weekInfo, dateFromKey, dateKey, formatShiftRange, shiftDurationMinutes } from "@/lib/shift";
 import { nrwHolidayName } from "@/lib/holidays";
-import { isWorkday } from "@/lib/soll";
+import {
+  isWorkday,
+  countWorkdays,
+  dailySollMinutes,
+  absenceWorkdays,
+  type AbsenceSpan,
+} from "@/lib/soll";
 import { absenceTypeColor, absenceTypeLabel } from "@/lib/absence-view";
 import { dayKey as tzDayKey } from "@/lib/time-zone";
 import { toViewEntry } from "@/lib/time-entry-view";
@@ -35,6 +41,7 @@ export default async function PlanPage({ searchParams }: PageProps<"/plan">) {
         name: true,
         role: true,
         weeklyHours: true,
+        workDaysPerWeek: true,
         minBreakMinutes: true,
         monthlySalary: true,
       },
@@ -75,6 +82,30 @@ export default async function PlanPage({ searchParams }: PageProps<"/plan">) {
     users.map((u) => [u.id, hourlyRate(u.monthlySalary, u.weeklyHours)]),
   );
   const minBreakByUser = new Map(users.map((u) => [u.id, u.minBreakMinutes]));
+
+  // Effektives Wochen-Soll je Mitarbeiter: Arbeitstage der Woche (ohne Feiertage)
+  // minus genehmigte Abwesenheitstage, mal Tagessoll.
+  const weekStartKey = week.days[0].key;
+  const weekEndKey = week.days[6].key;
+  const weekWorkdays = countWorkdays(weekStartKey, weekEndKey);
+  const spansByUser = new Map<string, AbsenceSpan[]>();
+  for (const a of absenceRows) {
+    const arr = spansByUser.get(a.userId) ?? [];
+    arr.push({
+      type: a.type,
+      startKey: dateKey(a.startDate),
+      endKey: dateKey(a.endDate),
+      halfDay: a.halfDay,
+    });
+    spansByUser.set(a.userId, arr);
+  }
+  const sollByUser = new Map(
+    users.map((u) => {
+      const daily = dailySollMinutes(u.weeklyHours, u.workDaysPerWeek);
+      const absDays = absenceWorkdays(spansByUser.get(u.id) ?? [], weekStartKey, weekEndKey);
+      return [u.id, Math.round(Math.max(0, weekWorkdays - absDays) * daily)];
+    }),
+  );
 
   // Ist-Minuten je Mitarbeiter+Tag (nur Admin)
   const istMap = new Map<string, number>();
@@ -174,6 +205,7 @@ export default async function PlanPage({ searchParams }: PageProps<"/plan">) {
           name: u.name,
           isSelf: u.id === session.user.id,
           isAdmin: u.role === "ADMIN",
+          sollMinutes: sollByUser.get(u.id) ?? 0,
         }))}
         days={week.days.map((d) => ({
           key: d.key,

@@ -1,4 +1,10 @@
-export type GridUser = { id: string; name: string; isSelf: boolean; isAdmin: boolean };
+export type GridUser = {
+  id: string;
+  name: string;
+  isSelf: boolean;
+  isAdmin: boolean;
+  sollMinutes: number; // effektives Wochen-Soll (Feiertage + genehmigte Abwesenheit abgezogen)
+};
 
 export type GridShift = {
   id: string;

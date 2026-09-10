@@ -41,6 +41,7 @@ export type MonthReport = {
     creditedMinutes: number;
     absenceDays: number;
     balanceMinutes: number;
+    adjustmentMinutes: number; // Auszahlungen / Korrekturen im Monat
     cumulativeMinutes: number;
     pendingEntries: number;
   };
@@ -71,7 +72,7 @@ export async function getMonthReport(
   const startDate = new Date(`${startKey}T00:00:00.000Z`);
   const endDate = new Date(`${endKey}T00:00:00.000Z`);
 
-  const [entries, shifts, absences, pendingCount] = await Promise.all([
+  const [entries, shifts, absences, pendingCount, adjustments] = await Promise.all([
     prisma.timeEntry.findMany({
       where: {
         userId,
@@ -97,7 +98,13 @@ export async function getMonthReport(
     prisma.timeEntry.count({
       where: { userId, status: "PENDING", end: { not: null }, start: { gte: tz.start, lte: tz.end } },
     }),
+    prisma.balanceAdjustment.findMany({
+      where: { userId, date: { gte: startDate, lte: endDate } },
+      select: { minutes: true },
+    }),
   ]);
+
+  const adjustmentMinutes = adjustments.reduce((s, a) => s + a.minutes, 0);
 
   const daily = dailySollMinutes(user.weeklyHours, user.workDaysPerWeek);
 
@@ -197,6 +204,7 @@ export async function getMonthReport(
       creditedMinutes,
       absenceDays,
       balanceMinutes: workedMinutes + creditedMinutes - sollMinutes,
+      adjustmentMinutes,
       cumulativeMinutes,
       pendingEntries: pendingCount,
     },
@@ -240,6 +248,9 @@ export function reportToCsv(report: MonthReport): string {
   rows.push(["Summe Ist gearbeitet (h)", dec(t.workedMinutes)]);
   rows.push(["Urlaub/Krank gutgeschrieben (h)", dec(t.creditedMinutes)]);
   rows.push(["Saldo Monat (h)", dec(t.balanceMinutes)]);
+  if (t.adjustmentMinutes !== 0) {
+    rows.push(["Überstunden ausgezahlt / Korrektur (h)", dec(t.adjustmentMinutes)]);
+  }
   rows.push(["Saldo gesamt (h)", dec(t.cumulativeMinutes)]);
 
   return rows

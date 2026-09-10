@@ -8,6 +8,7 @@ import { getMonthAccount, getCumulativeBalance } from "@/lib/account";
 import { formatMinutes } from "@/lib/worktime";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
+import { OvertimeSection, type Adjustment } from "./overtime-section";
 
 export const metadata: Metadata = { title: "Stundenkonto – Eifel Wagyu" };
 
@@ -75,11 +76,21 @@ async function AccountTable({
             </tr>
           ))}
           <tr className="border-b border-slate-100 font-medium dark:border-slate-800/60">
-            <td className="px-3 py-2">Saldo Monat</td>
+            <td className="px-3 py-2">Saldo Monat (erarbeitet)</td>
             <td className={`px-3 py-2 text-right tabular-nums ${acc.balanceMinutes < 0 ? "text-red-600 dark:text-red-400" : "text-emerald-700 dark:text-emerald-400"}`}>
               {formatMinutes(acc.balanceMinutes)}
             </td>
           </tr>
+          {acc.adjustmentMinutes !== 0 && (
+            <tr className="border-b border-slate-100 dark:border-slate-800/60">
+              <td className="px-3 py-2 text-slate-600 dark:text-slate-300">
+                Überstunden ausgezahlt / Korrektur
+              </td>
+              <td className={`px-3 py-2 text-right tabular-nums ${acc.adjustmentMinutes < 0 ? "text-red-600 dark:text-red-400" : "text-emerald-700 dark:text-emerald-400"}`}>
+                {formatMinutes(acc.adjustmentMinutes)}
+              </td>
+            </tr>
+          )}
           <tr className="font-semibold">
             <td className="px-3 py-2">
               Saldo gesamt (ab {format(new Date(Date.UTC(fromY, fromM - 1, 1)), "MM/yyyy")})
@@ -121,6 +132,21 @@ export default async function StundenkontoPage({
       where: { id: targetUserId },
       select: { id: true, name: true, employmentStart: true },
     }));
+
+  const adjustments: Adjustment[] = isAdmin
+    ? (
+        await prisma.balanceAdjustment.findMany({
+          where: { userId: targetUserId },
+          orderBy: { date: "desc" },
+          select: { id: true, date: true, minutes: true, note: true },
+        })
+      ).map((a) => ({
+        id: a.id,
+        dateKey: a.date.toISOString().slice(0, 10),
+        minutes: a.minutes,
+        note: a.note,
+      }))
+    : [];
 
   const qs = (over: Record<string, string>) => {
     const params = new URLSearchParams({ m: key });
@@ -200,6 +226,14 @@ export default async function StundenkontoPage({
         automatisch, genehmigter Urlaub und Krankheit gelten als erfüllt.
       </p>
 
+      {isAdmin && (
+        <OvertimeSection
+          userId={targetUserId}
+          userName={targetUser.name}
+          adjustments={adjustments}
+        />
+      )}
+
       {isAdmin && <AdminOverview month1={month1} year={year} monthKey={key} />}
     </div>
   );
@@ -250,8 +284,8 @@ async function AdminOverview({
                 </td>
                 <td className="py-1.5 pr-4 text-right tabular-nums">{formatMinutes(r.acc.sollMinutes)}</td>
                 <td className="py-1.5 pr-4 text-right tabular-nums">{formatMinutes(r.acc.workedMinutes + r.acc.creditedMinutes)}</td>
-                <td className={`py-1.5 text-right font-medium tabular-nums ${r.acc.balanceMinutes < 0 ? "text-red-600 dark:text-red-400" : "text-emerald-700 dark:text-emerald-400"}`}>
-                  {formatMinutes(r.acc.balanceMinutes)}
+                <td className={`py-1.5 text-right font-medium tabular-nums ${r.acc.balanceWithAdjustmentsMinutes < 0 ? "text-red-600 dark:text-red-400" : "text-emerald-700 dark:text-emerald-400"}`}>
+                  {formatMinutes(r.acc.balanceWithAdjustmentsMinutes)}
                 </td>
               </tr>
             ))}

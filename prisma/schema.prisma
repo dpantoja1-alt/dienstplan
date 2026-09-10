@@ -57,9 +57,10 @@ model User {
   inviteTokenHash String?   @unique
   inviteExpiresAt DateTime?
 
-  timeEntries TimeEntry[]
-  shifts      Shift[]
-  absences    Absence[]
+  timeEntries        TimeEntry[]
+  shifts             Shift[]
+  absences           Absence[]
+  balanceAdjustments BalanceAdjustment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -155,4 +156,19 @@ model DayNote {
   date      DateTime @id @db.Date
   text      String
   updatedAt DateTime @updatedAt
+}
+
+/// Manuelle Buchung aufs Stundenkonto, z. B. Auszahlung von Überstunden.
+/// minutes negativ = Abzug (Auszahlung), positiv = Gutschrift.
+model BalanceAdjustment {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  date      DateTime @db.Date // Stichtag der Buchung (bestimmt den Monat)
+  minutes   Int
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, date])
 }

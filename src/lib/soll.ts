@@ -88,7 +88,9 @@ export type MonthAccount = {
   absenceDays: number; // Urlaub + Krank + Sonstige (Arbeitstage)
   creditedMinutes: number; // absenceDays * dailySoll
   workedMinutes: number; // Ist aus bestätigter Zeiterfassung
-  balanceMinutes: number; // workedMinutes + creditedMinutes - sollMinutes
+  adjustmentMinutes: number; // manuelle Buchungen (z. B. Überstunden-Auszahlung, meist negativ)
+  balanceMinutes: number; // erarbeiteter Saldo: workedMinutes + creditedMinutes - sollMinutes
+  balanceWithAdjustmentsMinutes: number; // balanceMinutes + adjustmentMinutes
 };
 
 export function monthAccount(params: {
@@ -98,6 +100,7 @@ export function monthAccount(params: {
   workDaysPerWeek: number;
   absences: AbsenceSpan[];
   workedMinutes: number;
+  adjustmentMinutes?: number;
 }): MonthAccount {
   const { start, end } = monthRangeKeys(params.year, params.month1);
   const workdays = countWorkdays(start, end);
@@ -105,6 +108,8 @@ export function monthAccount(params: {
   const sollMinutes = workdays * daily;
   const absenceDays = absenceWorkdays(params.absences, start, end);
   const creditedMinutes = Math.round(absenceDays * daily);
+  const adjustmentMinutes = params.adjustmentMinutes ?? 0;
+  const balanceMinutes = params.workedMinutes + creditedMinutes - sollMinutes;
   return {
     workdays,
     dailySollMinutes: daily,
@@ -112,7 +117,9 @@ export function monthAccount(params: {
     absenceDays,
     creditedMinutes,
     workedMinutes: params.workedMinutes,
-    balanceMinutes: params.workedMinutes + creditedMinutes - sollMinutes,
+    adjustmentMinutes,
+    balanceMinutes,
+    balanceWithAdjustmentsMinutes: balanceMinutes + adjustmentMinutes,
   };
 }
 
