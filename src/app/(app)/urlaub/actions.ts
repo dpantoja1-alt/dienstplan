@@ -126,7 +126,25 @@ export async function adminSaveAbsence(
   revalidatePath("/urlaub");
   revalidatePath("/urlaub/antraege");
   revalidatePath("/stundenkonto");
+  revalidatePath("/plan");
   return { ok: true };
+}
+
+/** Schnell-Eintrag aus dem Plan: 1 Tag, sofort genehmigt. */
+export async function quickAddAbsence(
+  userId: string,
+  dateKey: string,
+  type: "VACATION" | "SICK" | "OTHER",
+) {
+  await requireAdmin();
+  if (!keyRe.test(dateKey)) throw new Error("Ungültiges Datum.");
+  const date = dateFromKey(dateKey);
+  await prisma.absence.create({
+    data: { userId, type, status: "APPROVED", startDate: date, endDate: date },
+  });
+  revalidatePath("/plan");
+  revalidatePath("/urlaub");
+  revalidatePath("/stundenkonto");
 }
 
 export async function decideAbsence(id: string, approve: boolean) {
@@ -138,6 +156,7 @@ export async function decideAbsence(id: string, approve: boolean) {
   revalidatePath("/urlaub");
   revalidatePath("/urlaub/antraege");
   revalidatePath("/stundenkonto");
+  revalidatePath("/plan");
 }
 
 export async function deleteAbsence(id: string) {
@@ -146,4 +165,5 @@ export async function deleteAbsence(id: string) {
   revalidatePath("/urlaub");
   revalidatePath("/urlaub/antraege");
   revalidatePath("/stundenkonto");
+  revalidatePath("/plan");
 }

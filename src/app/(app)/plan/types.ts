@@ -34,11 +34,13 @@ export type GridDay = {
 };
 
 export type GridAbsence = {
+  id: string;
   userId: string;
   dayKey: string;
   type: "VACATION" | "SICK" | "OTHER";
   label: string; // "Urlaub", "Krank", "Urlaub ½"
   color: string;
+  multiDay: boolean; // Teil einer mehrtägigen Abwesenheit
 };
 
 export type GridIst = {

@@ -32,6 +32,7 @@ export type TeamRow = {
   todayNetMinutes: number;
   todayEntries: TodayEntry[];
   defaultStart: string;
+  alert: string | null;
 };
 
 function TodayEntryItem({ userId, entry }: { userId: string; entry: TodayEntry }) {
@@ -139,7 +140,12 @@ export function TeamClockRow({ row }: { row: TeamRow }) {
   const running = row.openSinceISO !== null;
 
   return (
-    <li className="px-3 py-3">
+    <li className={`px-3 py-3 ${row.alert ? "border-l-4 border-red-500 bg-red-50/60 dark:bg-red-950/30" : ""}`}>
+      {row.alert && (
+        <p className="mb-1.5 text-sm font-medium text-red-700 dark:text-red-400">
+          ⚠ {row.alert}
+        </p>
+      )}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="font-medium">

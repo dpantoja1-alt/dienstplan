@@ -3,8 +3,16 @@
 import { useState, useTransition } from "react";
 import { formatShiftRange, minutesToHHMM } from "@/lib/shift";
 import { assignShiftFromTemplate, removeShift, saveShiftAsTemplate } from "./actions";
+import { quickAddAbsence, deleteAbsence } from "@/app/(app)/urlaub/actions";
+import { absenceTypeLabel } from "@/lib/absence-view";
 import { CustomShiftForm } from "./custom-shift-form";
-import type { GridShift, GridTemplate } from "./types";
+import type { GridAbsence, GridShift, GridTemplate } from "./types";
+
+const ABSENCE_TYPES: { type: "VACATION" | "SICK" | "OTHER"; label: string }[] = [
+  { type: "VACATION", label: "Urlaub" },
+  { type: "SICK", label: "Krank" },
+  { type: "OTHER", label: "Sonstiges" },
+];
 
 export function CellEditor({
   userId,
@@ -12,6 +20,7 @@ export function CellEditor({
   dayKey,
   dayLabel,
   shifts,
+  absence,
   templates,
   onClose,
 }: {
@@ -20,6 +29,7 @@ export function CellEditor({
   dayKey: string;
   dayLabel: string;
   shifts: GridShift[];
+  absence: GridAbsence | null;
   templates: GridTemplate[];
   onClose: () => void;
 }) {
@@ -152,6 +162,47 @@ export function CellEditor({
           </div>
         </div>
       )}
+
+      <div className="mt-4 border-t border-slate-200 pt-3 dark:border-slate-700">
+        <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          Abwesenheit
+        </div>
+        {absence ? (
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
+            <span
+              className="rounded border px-1.5 py-0.5 text-xs font-medium"
+              style={{ borderColor: absence.color, color: absence.color }}
+            >
+              {absenceTypeLabel(absence.type)}
+            </span>
+            {absence.multiDay && (
+              <span className="text-xs text-slate-400">
+                (Teil einer mehrtägigen Abwesenheit)
+              </span>
+            )}
+            <button
+              disabled={busy}
+              onClick={() => run(() => deleteAbsence(absence.id))}
+              className="text-red-600 hover:underline dark:text-red-400"
+            >
+              Entfernen
+            </button>
+          </div>
+        ) : (
+          <div className="mt-1 flex flex-wrap gap-2">
+            {ABSENCE_TYPES.map((a) => (
+              <button
+                key={a.type}
+                disabled={busy}
+                onClick={() => run(() => quickAddAbsence(userId, dayKey, a.type))}
+                className="rounded-md border border-slate-300 px-2 py-1 text-sm transition hover:bg-slate-100 disabled:opacity-50 dark:border-slate-600 dark:hover:bg-slate-800"
+              >
+                {a.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       {err && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{err}</p>}
       {msg && <p className="mt-2 text-sm text-emerald-700 dark:text-emerald-400">{msg}</p>}

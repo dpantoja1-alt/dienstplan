@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { berlinTodayRange, dateToLocalInput } from "@/lib/time-zone";
 import { toViewEntry } from "@/lib/time-entry-view";
+import { getOverrunAlerts, alertText } from "@/lib/alerts";
 import { TeamClockRow, type TeamRow } from "./team-clock-row";
 
 export const metadata: Metadata = { title: "Team-Zeiten – Eifel Wagyu" };
@@ -13,14 +14,16 @@ export default async function TeamZeitenPage() {
   await requireAdmin();
   const today = berlinTodayRange();
 
-  const [users, pendingCount] = await Promise.all([
+  const [users, pendingCount, overruns] = await Promise.all([
     prisma.user.findMany({
       where: { active: true },
       orderBy: [{ role: "asc" }, { name: "asc" }],
       select: { id: true, name: true, role: true, minBreakMinutes: true },
     }),
     prisma.timeEntry.count({ where: { status: "PENDING", end: { not: null } } }),
+    getOverrunAlerts(),
   ]);
+  const alertByUser = new Map(overruns.map((a) => [a.userId, a]));
 
   // Offene + heutige Einträge für alle Mitarbeiter in einem Rutsch
   const entries = await prisma.timeEntry.findMany({
@@ -63,6 +66,7 @@ export default async function TeamZeitenPage() {
       todayNetMinutes: todayNet,
       todayEntries: todays,
       defaultStart,
+      alert: alertByUser.get(u.id) ? alertText(alertByUser.get(u.id)!) : null,
     };
   });
 
@@ -86,6 +90,21 @@ export default async function TeamZeitenPage() {
         Stempeluhr und Nachträge für alle Mitarbeiter. Was du hier einträgst, ist
         sofort bestätigt.
       </p>
+
+      {overruns.length > 0 && (
+        <div className="rounded-lg border-2 border-red-500 bg-red-50 p-4 dark:border-red-700 dark:bg-red-950/40">
+          <div className="font-semibold text-red-800 dark:text-red-300">
+            ⚠ Über der geplanten Zeit eingestempelt
+          </div>
+          <ul className="mt-1 space-y-0.5 text-sm text-red-700 dark:text-red-400">
+            {overruns.map((a) => (
+              <li key={a.userId}>
+                <span className="font-medium">{a.name}</span> – {alertText(a)}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
         {rows.map((row) => (

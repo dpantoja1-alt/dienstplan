@@ -53,7 +53,7 @@ export default async function PlanPage({ searchParams }: PageProps<"/plan">) {
         startDate: { lte: sunday },
         endDate: { gte: monday },
       },
-      select: { userId: true, type: true, startDate: true, endDate: true, halfDay: true },
+      select: { id: true, userId: true, type: true, startDate: true, endDate: true, halfDay: true },
     }),
     prisma.dayNote.findMany({ where: { date: { gte: monday, lte: sunday } } }),
     isAdmin
@@ -103,11 +103,13 @@ export default async function PlanPage({ searchParams }: PageProps<"/plan">) {
     for (const d of week.days) {
       if (d.key < from || d.key > to || !isWorkday(d.key)) continue;
       gridAbsences.push({
+        id: a.id,
         userId: a.userId,
         dayKey: d.key,
         type: a.type,
         label: `${absenceTypeLabel(a.type)}${a.halfDay && single ? " ½" : ""}`,
         color: absenceTypeColor(a.type),
+        multiDay: !single,
       });
     }
   }

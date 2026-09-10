@@ -7,6 +7,7 @@ import { groupByDay } from "@/lib/time-entry-view";
 import { formatMinutes } from "@/lib/worktime";
 import { dateFromKey, formatFullDay, formatShiftRange } from "@/lib/shift";
 import { getMonthAccount, getVacationSummary } from "@/lib/account";
+import { getOverrunAlerts, alertText } from "@/lib/alerts";
 import { format } from "date-fns";
 
 export const metadata: Metadata = {
@@ -71,16 +72,36 @@ export default async function DashboardPage() {
   const nowMonth1 = new Date().getMonth() + 1;
 
   if (isAdmin) {
-    const [openInvites, pendingReviews, pendingAbsences, todayShifts] = await Promise.all([
+    const [openInvites, pendingReviews, pendingAbsences, todayShifts, overruns] = await Promise.all([
       prisma.user.count({ where: { passwordHash: null } }),
       prisma.timeEntry.count({ where: { status: "PENDING", end: { not: null } } }),
       prisma.absence.count({ where: { status: "PENDING" } }),
       prisma.shift.count({ where: { date: dateFromKey(todayKey) } }),
+      getOverrunAlerts(),
     ]);
 
     return (
       <div>
         <h1 className="text-2xl font-semibold">Hallo {firstName} 👋</h1>
+
+        {overruns.length > 0 && (
+          <Link
+            href="/zeiten/team"
+            className="mt-4 block rounded-lg border-2 border-red-500 bg-red-50 p-4 dark:border-red-700 dark:bg-red-950/40"
+          >
+            <div className="font-semibold text-red-800 dark:text-red-300">
+              ⚠ {overruns.length} Mitarbeiter{overruns.length === 1 ? " ist" : " sind"} länger eingestempelt als geplant
+            </div>
+            <ul className="mt-1 space-y-0.5 text-sm text-red-700 dark:text-red-400">
+              {overruns.map((a) => (
+                <li key={a.userId}>
+                  <span className="font-medium">{a.name}</span> – {alertText(a)}
+                </li>
+              ))}
+            </ul>
+          </Link>
+        )}
+
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card href="/zeiten/team" value={String(pendingReviews)} label="Zeiten zu prüfen" />
           <Card href="/urlaub/antraege" value={String(pendingAbsences)} label="Urlaubsanträge" />

@@ -275,6 +275,7 @@ export function PlanGrid({
           dayKey={sel.dayKey}
           dayLabel={`${selDay.weekday} ${selDay.label}`}
           shifts={selShifts}
+          absence={absenceByCell.get(`${sel.userId}|${sel.dayKey}`) ?? null}
           templates={templates}
           onClose={() => setSel(null)}
         />

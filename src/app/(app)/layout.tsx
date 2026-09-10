@@ -2,6 +2,7 @@ import Link from "next/link";
 import { signOut } from "@/auth";
 import { requireUser } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
+import { getOverrunAlerts } from "@/lib/alerts";
 import { Logo } from "@/components/logo";
 import { NavLink } from "./nav-link";
 
@@ -10,12 +11,14 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   const { name, role } = session.user;
   const isAdmin = role === "ADMIN";
 
-  const [pendingReviews, pendingAbsences] = isAdmin
+  const [pendingReviews, pendingAbsences, overruns] = isAdmin
     ? await Promise.all([
         prisma.timeEntry.count({ where: { status: "PENDING", end: { not: null } } }),
         prisma.absence.count({ where: { status: "PENDING" } }),
+        getOverrunAlerts(),
       ])
-    : [0, 0];
+    : [0, 0, []];
+  const overrunCount = overruns.length;
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -43,10 +46,16 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
               {isAdmin && (
                 <NavLink href="/zeiten/team">
                   Team-Zeiten
-                  {pendingReviews > 0 && (
-                    <span className="ml-1 rounded-full bg-amber-500 px-1.5 text-xs text-white">
-                      {pendingReviews}
+                  {overrunCount > 0 ? (
+                    <span className="ml-1 rounded-full bg-red-600 px-1.5 text-xs font-semibold text-white">
+                      ⚠ {overrunCount}
                     </span>
+                  ) : (
+                    pendingReviews > 0 && (
+                      <span className="ml-1 rounded-full bg-amber-500 px-1.5 text-xs text-white">
+                        {pendingReviews}
+                      </span>
+                    )
                   )}
                 </NavLink>
               )}
