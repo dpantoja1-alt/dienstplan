@@ -38,6 +38,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
               </NavLink>
               <NavLink href="/stundenkonto">Stundenkonto</NavLink>
               {isAdmin && <NavLink href="/mitarbeiter">Mitarbeiter</NavLink>}
+              {isAdmin && <NavLink href="/schichtvorlagen">Vorlagen</NavLink>}
               {isAdmin && (
                 <NavLink href="/zeiten/pruefen">
                   Prüfen

@@ -21,8 +21,8 @@ export default async function SchichtvorlagenPage() {
         <AddTemplate />
       </div>
       <p className="text-sm text-slate-500 dark:text-slate-400">
-        Vorlagen sind der Baukasten für den Plan. Bestehende Zuweisungen ändern sich
-        nicht, wenn du eine Vorlage später anpasst.
+        Vorlagen sind der Baukasten für den Plan und bleiben dauerhaft gespeichert.
+        Bestehende Zuweisungen ändern sich nicht, wenn du eine Vorlage später anpasst.
       </p>
 
       {templates.length === 0 ? (
