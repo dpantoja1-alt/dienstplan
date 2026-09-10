@@ -82,7 +82,7 @@ export default async function DashboardPage() {
       <div>
         <h1 className="text-2xl font-semibold">Hallo {firstName} 👋</h1>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Card href="/zeiten/pruefen" value={String(pendingReviews)} label="Zeiten zu prüfen" />
+          <Card href="/zeiten/team" value={String(pendingReviews)} label="Zeiten zu prüfen" />
           <Card href="/urlaub/antraege" value={String(pendingAbsences)} label="Urlaubsanträge" />
           <Card href="/plan" value={String(todayShifts)} label="Schichten heute" />
           <Card

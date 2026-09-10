@@ -30,6 +30,14 @@ export function dateToLocalInput(date: Date): string {
   return format(new TZDate(date, TZ), "yyyy-MM-dd'T'HH:mm");
 }
 
+/** UTC-Grenzen des heutigen Tages in Berliner Zeit. */
+export function berlinTodayRange(): { start: Date; end: Date; key: string } {
+  const key = format(new TZDate(new Date(), TZ), "yyyy-MM-dd");
+  const start = localInputToDate(`${key}T00:00`)!;
+  const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+  return { start, end, key };
+}
+
 /** "Mo., 09.09.2026" */
 export function formatDay(date: Date): string {
   return format(new TZDate(date, TZ), "EEE, dd.MM.yyyy", { locale: de });

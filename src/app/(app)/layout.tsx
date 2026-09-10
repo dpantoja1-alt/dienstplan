@@ -40,8 +40,8 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
               {isAdmin && <NavLink href="/mitarbeiter">Mitarbeiter</NavLink>}
               {isAdmin && <NavLink href="/schichtvorlagen">Vorlagen</NavLink>}
               {isAdmin && (
-                <NavLink href="/zeiten/pruefen">
-                  Prüfen
+                <NavLink href="/zeiten/team">
+                  Team-Zeiten
                   {pendingReviews > 0 && (
                     <span className="ml-1 rounded-full bg-amber-500 px-1.5 text-xs text-white">
                       {pendingReviews}

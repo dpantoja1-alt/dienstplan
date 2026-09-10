@@ -92,6 +92,36 @@ export async function clockOut() {
   revalidatePath("/zeiten");
 }
 
+/* ---------------------------------------------- Admin: Stempeluhr für andere */
+
+export async function adminClockIn(userId: string) {
+  await requireAdmin();
+  const open = await prisma.timeEntry.findFirst({ where: { userId, end: null } });
+  if (open) throw new Error("Für diesen Mitarbeiter läuft bereits eine Zeiterfassung.");
+
+  await prisma.timeEntry.create({
+    data: { userId, start: new Date(), source: "CLOCK", status: "CONFIRMED" },
+  });
+  revalidatePath("/zeiten/team");
+  revalidatePath("/zeiten");
+}
+
+export async function adminClockOut(userId: string) {
+  await requireAdmin();
+  const open = await prisma.timeEntry.findFirst({
+    where: { userId, end: null },
+    orderBy: { start: "desc" },
+  });
+  if (!open) throw new Error("Für diesen Mitarbeiter läuft keine Zeiterfassung.");
+
+  await prisma.timeEntry.update({
+    where: { id: open.id },
+    data: { end: new Date(), status: "CONFIRMED" },
+  });
+  revalidatePath("/zeiten/team");
+  revalidatePath("/zeiten");
+}
+
 /* ------------------------------------------------------- Mitarbeiter: eigene */
 
 export async function addOwnEntry(
@@ -197,6 +227,7 @@ export async function adminSaveEntry(
   }
   revalidatePath("/zeiten");
   revalidatePath("/zeiten/pruefen");
+  revalidatePath("/zeiten/team");
   if (userId) revalidatePath(`/mitarbeiter/${userId}/zeiten`);
   return { ok: true };
 }
@@ -208,6 +239,7 @@ export async function confirmEntry(id: string) {
     data: { status: "CONFIRMED", correctionNote: null },
   });
   revalidatePath("/zeiten/pruefen");
+  revalidatePath("/zeiten/team");
   revalidatePath(`/mitarbeiter/${entry.userId}/zeiten`);
 }
 
@@ -218,6 +250,7 @@ export async function confirmAllForUser(userId: string) {
     data: { status: "CONFIRMED", correctionNote: null },
   });
   revalidatePath("/zeiten/pruefen");
+  revalidatePath("/zeiten/team");
   revalidatePath(`/mitarbeiter/${userId}/zeiten`);
 }
 
@@ -225,5 +258,6 @@ export async function adminDeleteEntry(id: string) {
   await requireAdmin();
   const entry = await prisma.timeEntry.delete({ where: { id } });
   revalidatePath("/zeiten/pruefen");
+  revalidatePath("/zeiten/team");
   revalidatePath(`/mitarbeiter/${entry.userId}/zeiten`);
 }
