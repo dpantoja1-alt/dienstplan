@@ -88,6 +88,7 @@ export default async function MitarbeiterDetailPage({
           vacationDaysPerYear: user.vacationDaysPerYear,
           minBreakMinutes: user.minBreakMinutes,
           employmentStart: toDateInput(user.employmentStart),
+          monthlySalary: user.monthlySalary?.toString() ?? "",
         }}
       />
     </div>

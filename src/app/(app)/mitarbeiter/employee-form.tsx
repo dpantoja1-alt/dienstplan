@@ -13,6 +13,7 @@ export type EmployeeDefaults = {
   vacationDaysPerYear: number;
   minBreakMinutes: number;
   employmentStart: string; // yyyy-mm-dd oder ""
+  monthlySalary: string; // "" oder Zahl
 };
 
 const empty: EmployeeFormState = {};
@@ -165,6 +166,23 @@ export function EmployeeForm({
           name="employmentStart"
           type="date"
           defaultValue={defaults.employmentStart}
+          className={inputCls}
+        />
+      </Field>
+
+      <Field
+        label="Monatsgehalt brutto (€)"
+        name="monthlySalary"
+        error={fe.monthlySalary}
+        hint="Optional. Nur für die Kostenansicht im Plan – Mitarbeiter sehen das nie."
+      >
+        <input
+          name="monthlySalary"
+          type="number"
+          min="0"
+          step="1"
+          placeholder="–"
+          defaultValue={defaults.monthlySalary}
           className={inputCls}
         />
       </Field>

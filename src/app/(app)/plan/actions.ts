@@ -260,6 +260,26 @@ export async function copyPreviousWeek(mondayKey: string) {
   return { created: toCreate.length };
 }
 
+/** Tagesinfo setzen/löschen (Admin). Leerer Text löscht die Notiz. */
+export async function saveDayNote(dateKey: string, text: string) {
+  await requireAdmin();
+  if (!keyRe.test(dateKey)) throw new Error("Ungültiges Datum.");
+  const trimmed = text.trim().slice(0, 2000);
+  const date = dateFromKey(dateKey);
+
+  if (trimmed === "") {
+    await prisma.dayNote.deleteMany({ where: { date } });
+  } else {
+    await prisma.dayNote.upsert({
+      where: { date },
+      create: { date, text: trimmed },
+      update: { text: trimmed },
+    });
+  }
+  revalidatePath("/plan");
+  revalidatePath("/dashboard");
+}
+
 export async function clearWeek(mondayKey: string) {
   await requireAdmin();
   if (!keyRe.test(mondayKey)) throw new Error("Ungültige Woche.");

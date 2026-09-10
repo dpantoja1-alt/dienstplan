@@ -50,6 +50,7 @@ model User {
   workDaysPerWeek     Int       @default(5)
   vacationDaysPerYear Float     @default(30)
   minBreakMinutes     Int       @default(0) // 0 = nur gesetzliche Pausenlogik
+  monthlySalary       Float? // Bruttomonatsgehalt in Euro (nur Admin), für Plan-Kosten
   employmentStart     DateTime?
 
   // Einladungs-Flow
@@ -147,4 +148,11 @@ model TimeEntry {
 
   @@index([userId, start])
   @@index([status])
+}
+
+/// Freitext-Info zu einem Kalendertag im Plan (Admin schreibt, alle lesen).
+model DayNote {
+  date      DateTime @id @db.Date
+  text      String
+  updatedAt DateTime @updatedAt
 }

@@ -37,6 +37,7 @@ export default async function NeuerMitarbeiterPage() {
           vacationDaysPerYear: 30,
           minBreakMinutes: 0,
           employmentStart: "",
+          monthlySalary: "",
         }}
       />
     </div>

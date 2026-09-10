@@ -40,3 +40,12 @@ export type GridAbsence = {
   label: string; // "Urlaub", "Krank", "Urlaub ½"
   color: string;
 };
+
+export type GridIst = {
+  userId: string;
+  dayKey: string;
+  netMinutes: number;
+  cost: number | null; // null = kein Gehalt hinterlegt
+};
+
+export type DayNote = { dayKey: string; text: string };

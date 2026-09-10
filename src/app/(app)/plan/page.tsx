@@ -8,9 +8,12 @@ import { weekInfo, dateFromKey, dateKey, formatShiftRange, shiftDurationMinutes 
 import { nrwHolidayName } from "@/lib/holidays";
 import { isWorkday } from "@/lib/soll";
 import { absenceTypeColor, absenceTypeLabel } from "@/lib/absence-view";
+import { dayKey as tzDayKey } from "@/lib/time-zone";
+import { toViewEntry } from "@/lib/time-entry-view";
+import { hourlyRate, dayCost } from "@/lib/cost";
 import { PlanGrid } from "./plan-grid";
 import { WeekToolbar } from "./week-toolbar";
-import type { GridAbsence, GridShift, GridTemplate } from "./types";
+import type { GridAbsence, GridIst, GridShift, GridTemplate } from "./types";
 
 export const metadata: Metadata = { title: "Plan – Dienstplan" };
 
@@ -23,11 +26,18 @@ export default async function PlanPage({ searchParams }: PageProps<"/plan">) {
   const monday = dateFromKey(week.key);
   const sunday = dateFromKey(week.days[6].key);
 
-  const [users, shiftRows, templates, absenceRows] = await Promise.all([
+  const [users, shiftRows, templates, absenceRows, dayNoteRows, timeRows] = await Promise.all([
     prisma.user.findMany({
       where: { active: true },
       orderBy: [{ role: "asc" }, { name: "asc" }],
-      select: { id: true, name: true, role: true },
+      select: {
+        id: true,
+        name: true,
+        role: true,
+        weeklyHours: true,
+        minBreakMinutes: true,
+        monthlySalary: true,
+      },
     }),
     prisma.shift.findMany({
       where: { date: { gte: monday, lte: sunday } },
@@ -45,7 +55,45 @@ export default async function PlanPage({ searchParams }: PageProps<"/plan">) {
       },
       select: { userId: true, type: true, startDate: true, endDate: true, halfDay: true },
     }),
+    prisma.dayNote.findMany({ where: { date: { gte: monday, lte: sunday } } }),
+    isAdmin
+      ? prisma.timeEntry.findMany({
+          where: {
+            status: "CONFIRMED",
+            end: { not: null },
+            start: {
+              gte: new Date(monday.getTime() - 2 * 86400000),
+              lte: new Date(sunday.getTime() + 2 * 86400000),
+            },
+          },
+        })
+      : Promise.resolve([]),
   ]);
+
+  const dayKeys = new Set(week.days.map((d) => d.key));
+  const rateByUser = new Map(
+    users.map((u) => [u.id, hourlyRate(u.monthlySalary, u.weeklyHours)]),
+  );
+  const minBreakByUser = new Map(users.map((u) => [u.id, u.minBreakMinutes]));
+
+  // Ist-Minuten je Mitarbeiter+Tag (nur Admin)
+  const istMap = new Map<string, number>();
+  for (const e of timeRows) {
+    const k = tzDayKey(e.start);
+    if (!dayKeys.has(k)) continue;
+    const v = toViewEntry(e, minBreakByUser.get(e.userId) ?? 0);
+    istMap.set(`${e.userId}|${k}`, (istMap.get(`${e.userId}|${k}`) ?? 0) + (v.netMinutes ?? 0));
+  }
+  const gridIst: GridIst[] = [...istMap.entries()].map(([key, netMinutes]) => {
+    const [userId, dayKey] = key.split("|");
+    const cost = dayCost(netMinutes, rateByUser.get(userId) ?? null);
+    return { userId, dayKey, netMinutes, cost };
+  });
+
+  const dayNotes = dayNoteRows.map((n) => ({
+    dayKey: n.date.toISOString().slice(0, 10),
+    text: n.text,
+  }));
 
   const gridAbsences: GridAbsence[] = [];
   for (const a of absenceRows) {
@@ -134,8 +182,11 @@ export default async function PlanPage({ searchParams }: PageProps<"/plan">) {
         }))}
         shifts={gridShifts}
         absences={gridAbsences}
+        ist={gridIst}
+        dayNotes={dayNotes}
         templates={gridTemplates}
         canEdit={isAdmin}
+        showCostControls={isAdmin && users.some((u) => u.monthlySalary != null)}
       />
 
       {!isAdmin && (

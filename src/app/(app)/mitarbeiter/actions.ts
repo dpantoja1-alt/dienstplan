@@ -29,6 +29,15 @@ const employeeSchema = z.object({
     .optional()
     .transform((v) => (v ? new Date(v) : null))
     .refine((v) => v === null || !Number.isNaN(v.getTime()), "Ungültiges Datum"),
+  monthlySalary: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => (v && v !== "" ? Number(v) : null))
+    .refine(
+      (v) => v === null || (Number.isFinite(v) && v >= 0 && v <= 1_000_000),
+      "Ungültiges Gehalt",
+    ),
 });
 
 export type EmployeeFormState = {
@@ -46,6 +55,7 @@ function parseForm(formData: FormData) {
     vacationDaysPerYear: formData.get("vacationDaysPerYear"),
     minBreakMinutes: formData.get("minBreakMinutes"),
     employmentStart: formData.get("employmentStart"),
+    monthlySalary: formData.get("monthlySalary"),
   });
 }
 
@@ -84,6 +94,7 @@ export async function createEmployee(
         vacationDaysPerYear: data.vacationDaysPerYear,
         minBreakMinutes: data.minBreakMinutes,
         employmentStart: data.employmentStart,
+        monthlySalary: data.monthlySalary,
         active: false,
         inviteTokenHash: tokenHash,
         inviteExpiresAt: inviteExpiryDate(),
@@ -138,6 +149,7 @@ export async function updateEmployee(
         vacationDaysPerYear: data.vacationDaysPerYear,
         minBreakMinutes: data.minBreakMinutes,
         employmentStart: data.employmentStart,
+        monthlySalary: data.monthlySalary,
       },
     });
   } catch (err) {
