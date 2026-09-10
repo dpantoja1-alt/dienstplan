@@ -75,6 +75,7 @@ export async function clockIn() {
     },
   });
   revalidatePath("/zeiten");
+  revalidatePath("/dashboard");
 }
 
 export async function clockOut() {
@@ -90,6 +91,7 @@ export async function clockOut() {
     data: { end: new Date() },
   });
   revalidatePath("/zeiten");
+  revalidatePath("/dashboard");
 }
 
 /* ---------------------------------------------- Admin: Stempeluhr für andere */
@@ -122,87 +124,11 @@ export async function adminClockOut(userId: string) {
   revalidatePath("/zeiten");
 }
 
-/* ------------------------------------------------------- Mitarbeiter: eigene */
+/* -------------------------------------------------------------------- Admin
 
-export async function addOwnEntry(
-  _prev: EntryFormState,
-  formData: FormData,
-): Promise<EntryFormState> {
-  const session = await requireUser();
-  const parsed = parseEntry(formData);
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Eingabe ungültig." };
-  }
-  await prisma.timeEntry.create({
-    data: {
-      userId: session.user.id,
-      ...parsed.data,
-      source: "MANUAL",
-      status: "PENDING",
-    },
-  });
-  revalidatePath("/zeiten");
-  return { ok: true };
-}
-
-export async function updateOwnEntry(
-  id: string,
-  _prev: EntryFormState,
-  formData: FormData,
-): Promise<EntryFormState> {
-  const session = await requireUser();
-  const entry = await prisma.timeEntry.findUnique({ where: { id } });
-  if (!entry || entry.userId !== session.user.id) {
-    return { error: "Eintrag nicht gefunden." };
-  }
-  if (entry.status !== "PENDING") {
-    return { error: "Bestätigte Einträge kannst du nur per Korrektur ändern." };
-  }
-  const parsed = parseEntry(formData);
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Eingabe ungültig." };
-  }
-  await prisma.timeEntry.update({ where: { id }, data: parsed.data });
-  revalidatePath("/zeiten");
-  return { ok: true };
-}
-
-export async function deleteOwnEntry(id: string) {
-  const session = await requireUser();
-  const entry = await prisma.timeEntry.findUnique({ where: { id } });
-  if (!entry || entry.userId !== session.user.id) {
-    throw new Error("Eintrag nicht gefunden.");
-  }
-  if (entry.status !== "PENDING") {
-    throw new Error("Bestätigte Einträge kannst du nicht löschen.");
-  }
-  await prisma.timeEntry.delete({ where: { id } });
-  revalidatePath("/zeiten");
-}
-
-/** Bestätigten eigenen Eintrag zur Korrektur öffnen (Begründung nötig). */
-export async function requestCorrection(
-  id: string,
-  _prev: EntryFormState,
-  formData: FormData,
-): Promise<EntryFormState> {
-  const session = await requireUser();
-  const entry = await prisma.timeEntry.findUnique({ where: { id } });
-  if (!entry || entry.userId !== session.user.id) {
-    return { error: "Eintrag nicht gefunden." };
-  }
-  const reason = String(formData.get("reason") ?? "").trim();
-  if (reason.length < 3) return { error: "Bitte kurz begründen." };
-
-  await prisma.timeEntry.update({
-    where: { id },
-    data: { status: "PENDING", correctionNote: reason },
-  });
-  revalidatePath("/zeiten");
-  return { ok: true };
-}
-
-/* -------------------------------------------------------------------- Admin */
+   Mitarbeiter erfassen ihre Zeit ausschließlich per Stempeluhr (clockIn/
+   clockOut). Manuelles Eintragen/Ändern/Löschen eigener Zeiten ist nicht
+   möglich – Korrekturen macht die Leitung über die Team-Zeiten. */
 
 export async function adminSaveEntry(
   _prev: EntryFormState,

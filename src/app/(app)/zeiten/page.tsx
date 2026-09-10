@@ -3,10 +3,9 @@ import { requireUser } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { groupByDay } from "@/lib/time-entry-view";
 import { formatMinutes } from "@/lib/worktime";
-import { monthRange, dateToLocalInput } from "@/lib/time-zone";
+import { monthRange } from "@/lib/time-zone";
 import { StampClock } from "./stamp-clock";
 import { MonthNav } from "./month-nav";
-import { AddEntry } from "./add-entry";
 import { OwnEntryRow } from "./own-entry-row";
 
 export const metadata: Metadata = { title: "Zeiten – Eifel Wagyu" };
@@ -48,15 +47,17 @@ export default async function ZeitenPage({
 
       <StampClock openSinceISO={openEntry?.start.toISOString() ?? null} />
 
+      <p className="text-xs text-slate-400">
+        Deine Arbeitszeit erfasst du über die Stempeluhr. Stimmt etwas nicht,
+        wende dich an die Leitung – sie kann Zeiten korrigieren.
+      </p>
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <MonthNav basePath="/zeiten" label={month.key} prev={month.prev} next={month.next} />
-        <div className="flex items-center gap-4">
-          <span className="text-sm">
-            Summe Monat:{" "}
-            <span className="font-semibold tabular-nums">{formatMinutes(totalNet)}</span>
-          </span>
-          <AddEntry defaultStart={dateToLocalInput(new Date())} />
-        </div>
+        <span className="text-sm">
+          Summe Monat:{" "}
+          <span className="font-semibold tabular-nums">{formatMinutes(totalNet)}</span>
+        </span>
       </div>
 
       {days.length === 0 ? (

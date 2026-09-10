@@ -8,6 +8,7 @@ import { formatMinutes } from "@/lib/worktime";
 import { dateFromKey, formatFullDay, formatShiftRange } from "@/lib/shift";
 import { getMonthAccount, getVacationSummary } from "@/lib/account";
 import { getOverrunAlerts, alertText } from "@/lib/alerts";
+import { StampClock } from "@/app/(app)/zeiten/stamp-clock";
 import { format } from "date-fns";
 
 export const metadata: Metadata = {
@@ -136,6 +137,11 @@ export default async function DashboardPage() {
   return (
     <div>
       <h1 className="text-2xl font-semibold">Hallo {firstName} 👋</h1>
+
+      <div className="mt-4">
+        <StampClock openSinceISO={openEntry?.start.toISOString() ?? null} />
+      </div>
+
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card
           href="/zeiten"
