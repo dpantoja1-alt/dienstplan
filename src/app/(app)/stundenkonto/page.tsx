@@ -172,6 +172,29 @@ export default async function StundenkontoPage({
         employmentStart={targetUser.employmentStart}
       />
 
+      <div className="flex flex-wrap gap-2">
+        <a
+          href={`/stundennachweis?m=${key}${targetUserId !== session.user.id ? `&u=${targetUserId}` : ""}`}
+          className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-slate-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+        >
+          Stundennachweis (Druck / PDF)
+        </a>
+        <a
+          href={`/api/berichte?m=${key}${targetUserId !== session.user.id ? `&u=${targetUserId}` : ""}`}
+          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium transition hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
+        >
+          CSV herunterladen
+        </a>
+        {isAdmin && (
+          <a
+            href={`/api/berichte?m=${key}&team=1`}
+            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium transition hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
+          >
+            Team-Übersicht CSV
+          </a>
+        )}
+      </div>
+
       <p className="text-xs text-slate-400">
         Ist zählt nur bestätigte Zeiterfassung. Feiertage senken die Sollzeit
         automatisch, genehmigter Urlaub und Krankheit gelten als erfüllt.
