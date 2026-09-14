@@ -56,12 +56,20 @@ export default async function MitarbeiterDetailPage({
       </Link>
       <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold">{user.name}</h1>
-        <Link
-          href={`/mitarbeiter/${user.id}/zeiten`}
-          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm transition hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
-        >
-          Zeiten ansehen
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={`/mitarbeiter/${user.id}/zeiten`}
+            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm transition hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
+          >
+            Zeiten ansehen
+          </Link>
+          <Link
+            href={`/datenschutz-kenntnisnahme?u=${user.id}`}
+            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm transition hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
+          >
+            Datenschutz-Kenntnisnahme drucken
+          </Link>
+        </div>
       </div>
 
       {saved && (

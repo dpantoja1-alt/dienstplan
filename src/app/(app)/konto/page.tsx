@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { requireUser } from "@/lib/auth-helpers";
 import { PasswordForm } from "./password-form";
 
@@ -25,6 +26,17 @@ export default async function KontoPage() {
 
       <h2 className="mt-8 text-lg font-semibold">Passwort ändern</h2>
       <PasswordForm />
+
+      <h2 className="mt-8 text-lg font-semibold">Datenschutz</h2>
+      <p className="mt-1 text-sm text-muted">
+        <Link href="/datenschutz" className="hover:underline">
+          Datenschutzerklärung lesen
+        </Link>
+        {" · "}
+        <Link href="/datenschutz-kenntnisnahme" className="hover:underline">
+          Kenntnisnahme ausdrucken
+        </Link>
+      </p>
     </div>
   );
 }
