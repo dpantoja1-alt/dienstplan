@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { Logo } from "@/components/logo";
@@ -24,6 +25,10 @@ export default async function LoginPage() {
         </p>
         <LoginForm />
       </div>
+
+      <Link href="/datenschutz" className="text-xs text-muted hover:underline">
+        Datenschutzerklärung
+      </Link>
     </main>
   );
 }

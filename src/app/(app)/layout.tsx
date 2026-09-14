@@ -91,6 +91,11 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         </div>
       </header>
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">{children}</main>
+      <footer className="border-t border-line px-4 py-3 text-center">
+        <Link href="/datenschutz" className="text-xs text-muted hover:underline">
+          Datenschutzerklärung
+        </Link>
+      </footer>
     </div>
   );
 }

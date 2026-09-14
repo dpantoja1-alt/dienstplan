@@ -17,7 +17,11 @@ export const authConfig = {
 
       // Öffentlich erreichbar (auch ohne Login). Die /login-Seite leitet
       // angemeldete Nutzer selbst weiter (nach Prüfung, dass das Konto existiert).
-      if (pathname === "/login" || pathname.startsWith("/invite")) {
+      if (
+        pathname === "/login" ||
+        pathname.startsWith("/invite") ||
+        pathname === "/datenschutz"
+      ) {
         return true;
       }
 
