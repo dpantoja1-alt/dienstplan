@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { getOverrunAlerts } from "@/lib/alerts";
 import { Logo } from "@/components/logo";
 import { NavLink } from "./nav-link";
+import { MobileNav } from "./mobile-nav";
+import { UserIcon, LogoutIcon } from "./nav-icons";
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   const session = await requireUser();
@@ -22,13 +24,13 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="border-b border-line bg-surface">
+      <header className="relative border-b border-line bg-surface">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-3">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
             <Link href="/dashboard" aria-label="Startseite">
               <Logo size="sm" />
             </Link>
-            <nav className="flex flex-wrap items-center gap-1 text-sm">
+            <MobileNav>
               <NavLink href="/dashboard">Übersicht</NavLink>
               <NavLink href="/plan">Plan</NavLink>
               <NavLink href="/zeiten" exact>Zeiten</NavLink>
@@ -59,11 +61,16 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
                   )}
                 </NavLink>
               )}
-            </nav>
+            </MobileNav>
           </div>
-          <div className="flex items-center gap-3 text-sm">
-            <Link href="/konto" className="text-slate-500 hover:underline dark:text-slate-400">
-              {name} · {isAdmin ? "Admin" : "Mitarbeiter"}
+          <div className="flex items-center gap-2 text-sm">
+            <Link
+              href="/konto"
+              title={`${name} · ${isAdmin ? "Admin" : "Mitarbeiter"}`}
+              aria-label={`${name} · ${isAdmin ? "Admin" : "Mitarbeiter"}`}
+              className="rounded-md border border-transparent p-1.5 text-slate-500 transition hover:border-slate-300 hover:bg-slate-100 dark:text-slate-400 dark:hover:border-slate-600 dark:hover:bg-slate-800"
+            >
+              <UserIcon className="h-5 w-5" />
             </Link>
             <form
               action={async () => {
@@ -73,9 +80,11 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             >
               <button
                 type="submit"
-                className="rounded-md border border-slate-300 px-3 py-1 transition hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
+                title="Abmelden"
+                aria-label="Abmelden"
+                className="rounded-md border border-slate-300 p-1.5 transition hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
               >
-                Abmelden
+                <LogoutIcon className="h-5 w-5" />
               </button>
             </form>
           </div>
