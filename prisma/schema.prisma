@@ -45,6 +45,10 @@ model User {
   role         Role    @default(EMPLOYEE)
   active       Boolean @default(false)
 
+  // Brute-Force-Schutz beim Login
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+
   // Anstellung / Arbeitszeit
   weeklyHours         Float     @default(40)
   workDaysPerWeek     Int       @default(5)

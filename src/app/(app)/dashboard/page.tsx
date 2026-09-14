@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { auth } from "@/auth";
+import { requireUser } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { monthRange } from "@/lib/time-zone";
 import { groupByDay } from "@/lib/time-entry-view";
@@ -62,8 +62,7 @@ async function UpcomingShifts({ userId }: { userId: string }) {
 }
 
 export default async function DashboardPage() {
-  const session = await auth();
-  const user = session!.user;
+  const { user } = await requireUser();
   const firstName = user.name?.split(" ")[0] ?? "";
   const isAdmin = user.role === "ADMIN";
   const month = monthRange();
