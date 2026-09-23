@@ -23,6 +23,13 @@ function hm(total: number): string {
   return `${sign}${Math.floor(abs / 60)}:${String(abs % 60).padStart(2, "0")}`;
 }
 
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
 function useToggle(key: string): [boolean, () => void] {
   const [on, setOn] = useState(false);
   useEffect(() => {
@@ -45,6 +52,13 @@ function useToggle(key: string): [boolean, () => void] {
   };
   return [on, toggle];
 }
+
+const cellBase = "border-t border-line p-1.5 align-top";
+const headCls = "text-[11px] font-semibold uppercase tracking-wider text-muted";
+const pill = "inline-block rounded-full px-2 py-0.5 text-xs font-medium tabular-nums whitespace-nowrap";
+const warnPill = "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300";
+const toggleCls =
+  "flex cursor-pointer items-center gap-2 rounded-full border border-line bg-surface px-3 py-1 shadow-sm has-[:checked]:border-brand has-[:checked]:bg-brand/10";
 
 export function PlanGrid({
   users,
@@ -157,91 +171,93 @@ export function PlanGrid({
   const rightCols = 2 + (showIstCol ? 1 : 0) + (showKostenCol ? 1 : 0);
   const emptyRight = Array.from({ length: rightCols });
 
+  const dayTint = (d: GridDay, strong: boolean) =>
+    d.isToday
+      ? strong
+        ? "bg-brand/15"
+        : "bg-brand/10"
+      : d.holiday
+        ? "bg-rose-50/70 dark:bg-rose-950/25"
+        : "";
+
   return (
     <div>
       {canEdit && (
-        <div className="flex flex-wrap gap-4 text-sm">
-          <label className="flex items-center gap-1.5">
-            <input type="checkbox" checked={showIst} onChange={toggleIst} />
+        <div className="flex flex-wrap gap-2 text-sm">
+          <label className={toggleCls}>
+            <input type="checkbox" checked={showIst} onChange={toggleIst} className="accent-[var(--brand-strong)]" />
             Ist-Zeiten
           </label>
           {showCostControls && (
-            <label className="flex items-center gap-1.5">
-              <input type="checkbox" checked={showCost} onChange={toggleCost} />
+            <label className={toggleCls}>
+              <input type="checkbox" checked={showCost} onChange={toggleCost} className="accent-[var(--brand-strong)]" />
               Kosten
             </label>
           )}
         </div>
       )}
 
-      <div className="mt-3 overflow-x-auto">
-        <table className="w-full border-collapse text-sm">
+      <div className="mt-3 overflow-x-auto rounded-2xl border border-line bg-surface shadow-sm">
+        <table className="w-full border-separate border-spacing-0 text-sm">
           <thead>
             <tr>
-              <th className="sticky left-0 z-10 bg-[var(--background,#fafafa)] p-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-950 dark:text-slate-400">
-                Mitarbeiter
-              </th>
+              <th className={`sticky left-0 z-10 min-w-40 bg-surface p-3 text-left ${headCls}`}>Mitarbeiter</th>
               {days.map((d) => (
-                <th
-                  key={d.key}
-                  className={`min-w-28 p-2 text-center font-medium ${d.isToday ? "text-slate-900 dark:text-white" : "text-slate-500 dark:text-slate-400"}`}
-                >
-                  <div>{d.weekday}</div>
-                  <div className="text-xs font-normal">{d.label}</div>
+                <th key={d.key} className={`min-w-28 border-l border-line p-2 text-center font-medium ${dayTint(d, true)}`}>
+                  <div className={headCls}>{d.weekday}</div>
+                  <div
+                    className={`mx-auto mt-0.5 inline-flex min-w-10 items-center justify-center rounded-full px-2 py-0.5 text-xs ${
+                      d.isToday ? "bg-brand font-semibold text-brand-ink shadow-sm" : "text-foreground"
+                    }`}
+                  >
+                    {d.label}
+                  </div>
                   {d.holiday && (
-                    <div className="mt-0.5 text-[10px] font-normal leading-tight text-rose-600 dark:text-rose-400">
+                    <div className="mt-0.5 text-[10px] font-medium leading-tight text-rose-600 dark:text-rose-400">
                       {d.holiday}
                     </div>
                   )}
                 </th>
               ))}
-              <th className="min-w-16 border-l-2 border-slate-300 p-2 text-center text-xs font-semibold text-slate-500 dark:border-slate-600 dark:text-slate-400">
-                Soll
-              </th>
-              <th className="min-w-16 border-l border-slate-200 p-2 text-center text-xs font-semibold text-slate-500 dark:border-slate-800/60 dark:text-slate-400">
-                Geplant
-              </th>
-              {showIstCol && (
-                <th className="min-w-16 border-l border-slate-200 p-2 text-center text-xs font-semibold text-slate-500 dark:border-slate-800/60 dark:text-slate-400">
-                  Ist
-                </th>
-              )}
-              {showKostenCol && (
-                <th className="min-w-16 border-l border-slate-200 p-2 text-center text-xs font-semibold text-slate-500 dark:border-slate-800/60 dark:text-slate-400">
-                  Kosten
-                </th>
-              )}
+              <th className={`min-w-16 border-l-2 border-line p-2 text-center ${headCls}`}>Soll</th>
+              <th className={`min-w-16 border-l border-line p-2 text-center ${headCls}`}>Geplant</th>
+              {showIstCol && <th className={`min-w-16 border-l border-line p-2 text-center ${headCls}`}>Ist</th>}
+              {showKostenCol && <th className={`min-w-16 border-l border-line p-2 text-center ${headCls}`}>Kosten</th>}
             </tr>
           </thead>
           <tbody>
             {showNoteRow && (
-              <tr className="border-t border-slate-200 dark:border-slate-800">
-                <th className="sticky left-0 z-10 bg-[var(--background,#fafafa)] p-2 text-left align-top text-xs font-medium text-slate-400 dark:bg-slate-950">
+              <tr>
+                <th className={`sticky left-0 z-10 bg-surface p-3 text-left text-xs font-medium text-muted ${cellBase}`}>
                   Info
                 </th>
                 {days.map((d) => (
-                  <td
-                    key={d.key}
-                    className={`border-l border-slate-100 p-1.5 align-top dark:border-slate-800/60 ${d.holiday ? "bg-rose-50/50 dark:bg-rose-950/20" : ""}`}
-                  >
+                  <td key={d.key} className={`${cellBase} border-l ${dayTint(d, false)}`}>
                     <DayNoteCell dayKey={d.key} text={noteByDay.get(d.key) ?? ""} canEdit={canEdit} />
                   </td>
                 ))}
                 {emptyRight.map((_, i) => (
-                  <td
-                    key={i}
-                    className={`${i === 0 ? "border-l-2 border-slate-300 dark:border-slate-600" : "border-l border-slate-100 dark:border-slate-800/60"}`}
-                  />
+                  <td key={i} className={`${cellBase} ${i === 0 ? "border-l-2" : "border-l"}`} />
                 ))}
               </tr>
             )}
 
             {users.map((u) => (
-              <tr key={u.id} className="border-t border-slate-200 dark:border-slate-800">
-                <th className="sticky left-0 z-10 max-w-40 bg-[var(--background,#fafafa)] p-2 text-left align-top font-medium dark:bg-slate-950">
-                  <span className={u.isSelf ? "text-sky-700 dark:text-sky-400" : ""}>
-                    {u.name}
-                  </span>
+              <tr key={u.id}>
+                <th className={`sticky left-0 z-10 bg-surface p-3 text-left align-top font-medium ${cellBase}`}>
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      aria-hidden
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+                        u.isSelf
+                          ? "bg-brand text-brand-ink"
+                          : "bg-[#d8d2c3] text-[#3d3e37] dark:bg-slate-700 dark:text-slate-100"
+                      }`}
+                    >
+                      {initials(u.name)}
+                    </span>
+                    <span className={`leading-tight ${u.isSelf ? "text-brand-strong" : ""}`}>{u.name}</span>
+                  </div>
                 </th>
                 {days.map((d) => {
                   const cellShifts = byCell.get(`${u.id}|${d.key}`) ?? [];
@@ -252,17 +268,19 @@ export function PlanGrid({
                     <td
                       key={d.key}
                       onClick={canEdit ? () => setSel({ userId: u.id, dayKey: d.key }) : undefined}
-                      className={`border-l border-slate-100 p-1 align-top dark:border-slate-800/60 ${
-                        d.holiday ? "bg-rose-50/50 dark:bg-rose-950/20" : ""
-                      } ${
-                        canEdit ? "cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900" : ""
-                      } ${isSel ? "outline outline-2 outline-slate-900 dark:outline-white" : ""}`}
+                      className={`group/cell ${cellBase} border-l ${dayTint(d, false)} ${
+                        canEdit ? "cursor-pointer hover:bg-brand/10" : ""
+                      } ${isSel ? "outline outline-2 -outline-offset-2 outline-[var(--brand-strong)]" : ""}`}
                     >
-                      <div className="flex flex-col gap-1">
+                      <div className="flex min-h-12 flex-col gap-1.5">
                         {absence && (
                           <div
-                            className="rounded border px-1.5 py-1 text-xs font-medium leading-tight"
-                            style={{ borderColor: absence.color, color: absence.color }}
+                            className="rounded-lg border border-dashed px-2 py-1.5 text-xs font-semibold leading-tight"
+                            style={{
+                              borderColor: absence.color,
+                              color: absence.color,
+                              backgroundImage: `repeating-linear-gradient(135deg, color-mix(in srgb, ${absence.color} 14%, transparent) 0 6px, transparent 6px 12px)`,
+                            }}
                           >
                             {absence.label}
                           </div>
@@ -270,25 +288,25 @@ export function PlanGrid({
                         {cellShifts.map((s) => (
                           <div
                             key={s.id}
-                            className="rounded px-1.5 py-1 text-xs font-medium leading-tight text-white"
-                            style={{ backgroundColor: s.color }}
+                            className="rounded-lg border border-l-4 px-2 py-1.5 text-xs leading-tight text-foreground shadow-sm"
+                            style={{
+                              backgroundColor: `color-mix(in srgb, ${s.color} 16%, var(--surface))`,
+                              borderColor: `color-mix(in srgb, ${s.color} 45%, transparent)`,
+                              borderLeftColor: s.color,
+                            }}
                             title={`${s.label} ${formatShiftRange(s.startMinutes, s.endMinutes)}`}
                           >
-                            <div>{s.label}</div>
-                            <div className="font-normal opacity-90">
-                              {formatShiftRange(s.startMinutes, s.endMinutes)}
-                            </div>
+                            <div className="font-semibold">{s.label}</div>
+                            <div className="tabular-nums text-muted">{formatShiftRange(s.startMinutes, s.endMinutes)}</div>
                           </div>
                         ))}
                         {canEdit && cellShifts.length === 0 && !absence && (
-                          <span className="block py-1 text-center text-xs text-slate-300 dark:text-slate-600">
+                          <span className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-transparent text-base text-transparent transition group-hover/cell:border-brand group-hover/cell:text-brand-strong">
                             +
                           </span>
                         )}
                         {canEdit && showIst && cellIst && cellIst.netMinutes > 0 && (
-                          <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                            Ist {formatMinutes(cellIst.netMinutes)}
-                          </div>
+                          <div className="text-[11px] text-muted">Ist {formatMinutes(cellIst.netMinutes)}</div>
                         )}
                         {canEdit && showCost && cellIst && cellIst.cost != null && cellIst.cost > 0 && (
                           <div className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
@@ -307,31 +325,31 @@ export function PlanGrid({
                   const kosten = weekIst.cost.get(u.id) ?? 0;
                   return (
                     <>
-                      <td className="border-l-2 border-slate-300 p-2 text-center text-xs tabular-nums whitespace-nowrap text-slate-600 dark:border-slate-600 dark:text-slate-300">
-                        {hm(soll)}
+                      <td className={`${cellBase} border-l-2 text-center align-middle`}>
+                        <span className={`${pill} text-muted`}>{hm(soll)}</span>
                       </td>
-                      <td
-                        className={`border-l border-slate-100 p-2 text-center text-xs tabular-nums whitespace-nowrap dark:border-slate-800/60 ${
-                          geplant < soll ? "text-amber-600 dark:text-amber-400" : "text-slate-600 dark:text-slate-300"
-                        }`}
-                      >
-                        {hm(geplant)}
+                      <td className={`${cellBase} border-l text-center align-middle`}>
+                        <span className={`${pill} ${geplant < soll ? warnPill : "bg-slate-100 text-foreground dark:bg-slate-800"}`}>
+                          {hm(geplant)}
+                        </span>
                       </td>
                       {showIstCol && (
-                        <td
-                          className={`border-l border-slate-100 p-2 text-center text-xs font-medium tabular-nums whitespace-nowrap dark:border-slate-800/60 ${
-                            istMin === 0
-                              ? "text-slate-400"
-                              : istMin + 1 < soll
-                                ? "text-amber-600 dark:text-amber-400"
-                                : "text-emerald-700 dark:text-emerald-400"
-                          }`}
-                        >
-                          {istMin === 0 ? "–" : hm(istMin)}
+                        <td className={`${cellBase} border-l text-center align-middle`}>
+                          <span
+                            className={`${pill} ${
+                              istMin === 0
+                                ? "text-slate-400"
+                                : istMin + 1 < soll
+                                  ? warnPill
+                                  : "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
+                            }`}
+                          >
+                            {istMin === 0 ? "–" : hm(istMin)}
+                          </span>
                         </td>
                       )}
                       {showKostenCol && (
-                        <td className="border-l border-slate-100 p-2 text-center text-xs tabular-nums whitespace-nowrap text-slate-600 dark:border-slate-800/60 dark:text-slate-300">
+                        <td className={`${cellBase} border-l text-center align-middle text-xs tabular-nums whitespace-nowrap text-muted`}>
                           {kosten > 0 ? formatEuro(kosten) : ""}
                         </td>
                       )}
@@ -342,50 +360,44 @@ export function PlanGrid({
             ))}
 
             {canEdit && showCost && dayCostTotals.total > 0 && (
-              <tr className="border-t border-slate-200 dark:border-slate-800/60">
-                <th className="sticky left-0 z-10 bg-[var(--background,#fafafa)] p-2 text-left text-xs font-medium text-slate-500 dark:bg-slate-950 dark:text-slate-400">
+              <tr>
+                <th className={`sticky left-0 z-10 bg-surface p-3 text-left text-xs font-medium text-muted ${cellBase}`}>
                   Kosten/Tag
                 </th>
                 {days.map((d) => (
-                  <td key={d.key} className="border-l border-slate-100 p-1.5 text-center text-xs tabular-nums dark:border-slate-800/60">
-                    {dayCostTotals.byDay.get(d.key)
-                      ? formatEuro(dayCostTotals.byDay.get(d.key)!)
-                      : ""}
+                  <td key={d.key} className={`${cellBase} border-l text-center text-xs tabular-nums`}>
+                    {dayCostTotals.byDay.get(d.key) ? formatEuro(dayCostTotals.byDay.get(d.key)!) : ""}
                   </td>
                 ))}
                 {emptyRight.map((_, i) => (
-                  <td
-                    key={i}
-                    className={`${i === 0 ? "border-l-2 border-slate-300 dark:border-slate-600" : "border-l border-slate-100 dark:border-slate-800/60"}`}
-                  />
+                  <td key={i} className={`${cellBase} ${i === 0 ? "border-l-2" : "border-l"}`} />
                 ))}
               </tr>
             )}
 
             {users.length > 0 && (
-              <tr className="border-t-2 border-slate-300 dark:border-slate-700">
-                <th className="sticky left-0 z-10 bg-[var(--background,#fafafa)] p-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-950 dark:text-slate-400">
+              <tr className="bg-brand/10">
+                <th className={`sticky left-0 z-10 border-t-2 border-line bg-[color-mix(in_srgb,var(--brand)_12%,var(--surface))] p-3 text-left ${headCls}`}>
                   Gesamt
                 </th>
                 {days.map((d) => (
-                  <td key={d.key} className="border-l border-slate-100 dark:border-slate-800/60" />
+                  <td key={d.key} className="border-l border-t-2 border-line" />
                 ))}
-                <td className="border-l-2 border-slate-300 p-2 text-center text-xs font-semibold tabular-nums whitespace-nowrap dark:border-slate-600">
-                  {hm(summary.soll)}
-                </td>
-                <td className="border-l border-slate-200 p-2 text-center text-xs font-semibold tabular-nums whitespace-nowrap dark:border-slate-800/60">
-                  {hm(summary.geplant)}
-                </td>
-                {showIstCol && (
-                  <td className="border-l border-slate-200 p-2 text-center text-xs font-semibold tabular-nums whitespace-nowrap dark:border-slate-800/60">
-                    {hm(summary.istMin)}
-                  </td>
-                )}
-                {showKostenCol && (
-                  <td className="border-l border-slate-200 p-2 text-center text-xs font-semibold tabular-nums whitespace-nowrap dark:border-slate-800/60">
-                    {formatEuro(summary.kosten)}
-                  </td>
-                )}
+                {[
+                  { show: true, value: hm(summary.soll), first: true },
+                  { show: true, value: hm(summary.geplant), first: false },
+                  { show: showIstCol, value: hm(summary.istMin), first: false },
+                  { show: showKostenCol, value: formatEuro(summary.kosten), first: false },
+                ]
+                  .filter((c) => c.show)
+                  .map((c, i) => (
+                    <td
+                      key={i}
+                      className={`${c.first ? "border-l-2" : "border-l"} border-t-2 border-line p-2 text-center text-xs font-semibold tabular-nums whitespace-nowrap`}
+                    >
+                      {c.value}
+                    </td>
+                  ))}
               </tr>
             )}
           </tbody>
@@ -393,9 +405,7 @@ export function PlanGrid({
       </div>
 
       {showKostenCol && summary.kosten > 0 && (
-        <p className="mt-2 text-sm font-semibold">
-          Kosten Woche gesamt: {formatEuro(summary.kosten)}
-        </p>
+        <p className="mt-2 text-sm font-semibold">Kosten Woche gesamt: {formatEuro(summary.kosten)}</p>
       )}
 
       {canEdit && sel && selUser && selDay && (
@@ -413,9 +423,7 @@ export function PlanGrid({
       )}
 
       {users.length === 0 && (
-        <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
-          Keine aktiven Mitarbeiter.
-        </p>
+        <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">Keine aktiven Mitarbeiter.</p>
       )}
     </div>
   );

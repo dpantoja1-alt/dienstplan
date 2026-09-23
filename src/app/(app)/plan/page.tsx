@@ -173,7 +173,7 @@ export default async function PlanPage({ searchParams }: PageProps<"/plan">) {
   }));
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="relative left-1/2 flex w-[min(96vw,92rem)] -translate-x-1/2 flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Plan</h1>
         {isAdmin && (

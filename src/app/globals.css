@@ -68,3 +68,101 @@ h3 {
   font-family: var(--font-heading);
   letter-spacing: -0.01em;
 }
+
+/*
+ * Plastische Buttons ("3D"): gilt für alle Buttons/Links im Umriss-Stil
+ * (border-slate-300), Markenbuttons (bg-brand), Genehmigen (bg-emerald-600)
+ * und rote Umrissbuttons. Die Navigation in der Kopfzeile bleibt flach.
+ */
+:root {
+  --btn-edge: #a9a28a; /* untere Kante bei hellen Buttons */
+  --btn-edge-brand: #6b6023;
+  --btn-edge-green: #0f6b4a;
+  --btn-edge-red: #b9c0c9;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --btn-edge: #0f110e;
+    --btn-edge-brand: #6e6326;
+    --btn-edge-green: #064e3b;
+    --btn-edge-red: #0f110e;
+  }
+}
+
+button[class*="border-slate-300"],
+a[class*="border-slate-300"]:not(header *),
+button[class*="bg-brand"]:not(nav *),
+a[class*="bg-brand"]:not(header *),
+button[class*="bg-emerald-600"] {
+  position: relative;
+  border-radius: 0.5rem;
+  transition:
+    transform 80ms ease,
+    box-shadow 80ms ease,
+    filter 120ms ease;
+}
+
+/* Umriss-Buttons */
+button[class*="border-slate-300"]:not([class*="bg-brand"]),
+a[class*="border-slate-300"]:not(header *):not([class*="bg-brand"]) {
+  background-image: linear-gradient(to bottom, #ffffff, #e9e5d8);
+  border-color: var(--btn-edge);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 4px 0 var(--btn-edge),
+    0 7px 10px rgba(33, 39, 33, 0.2);
+}
+
+/* Marken-Buttons (Eifel Meadow) */
+button[class*="bg-brand"]:not(nav *),
+a[class*="bg-brand"]:not(header *) {
+  background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.28), rgba(0, 0, 0, 0.06));
+  border: 1px solid var(--btn-edge-brand);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.45) inset,
+    0 4px 0 var(--btn-edge-brand),
+    0 7px 10px rgba(33, 39, 33, 0.28);
+}
+
+/* Genehmigen */
+button[class*="bg-emerald-600"] {
+  background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.25), rgba(0, 0, 0, 0.08));
+  border: 1px solid var(--btn-edge-green);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.35) inset,
+    0 4px 0 var(--btn-edge-green),
+    0 7px 10px rgba(33, 39, 33, 0.28);
+}
+
+button[class*="border-slate-300"]:hover:not(:disabled),
+a[class*="border-slate-300"]:not(header *):hover,
+button[class*="bg-brand"]:hover:not(:disabled):not(nav *),
+button[class*="bg-emerald-600"]:hover:not(:disabled) {
+  filter: brightness(1.03);
+  transform: translateY(-1px);
+}
+
+button[class*="border-slate-300"]:active:not(:disabled),
+a[class*="border-slate-300"]:not(header *):active,
+button[class*="bg-brand"]:active:not(:disabled):not(nav *),
+a[class*="bg-brand"]:active:not(header *),
+button[class*="bg-emerald-600"]:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--btn-edge), 0 1px 2px rgba(33, 39, 33, 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  button[class*="border-slate-300"]:not([class*="bg-brand"]),
+  a[class*="border-slate-300"]:not(header *):not([class*="bg-brand"]) {
+    background-image: linear-gradient(to bottom, #34382f, #2a2d26);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.08) inset,
+      0 4px 0 var(--btn-edge),
+      0 5px 8px rgba(0, 0, 0, 0.35);
+  }
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
