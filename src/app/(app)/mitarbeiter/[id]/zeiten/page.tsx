@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { groupByDay } from "@/lib/time-entry-view";
 import { formatMinutes } from "@/lib/worktime";
 import { monthRange, dateToLocalInput } from "@/lib/time-zone";
+import { plannedMinutesByDay, PLAN_DEVIATION_THRESHOLD_MINUTES } from "@/lib/shift";
 import { MonthNav } from "@/app/(app)/zeiten/month-nav";
 import { AdminEntryRow } from "@/app/(app)/zeiten/admin-entry-row";
 import { AdminAddEntry } from "@/app/(app)/zeiten/admin-add-entry";
@@ -29,12 +30,19 @@ export default async function MitarbeiterZeitenPage({
   });
   if (!user) notFound();
 
-  const entries = await prisma.timeEntry.findMany({
-    where: { userId: id, start: { gte: month.start, lte: month.end } },
-    orderBy: { start: "desc" },
-  });
+  const [entries, shifts] = await Promise.all([
+    prisma.timeEntry.findMany({
+      where: { userId: id, start: { gte: month.start, lte: month.end } },
+      orderBy: { start: "desc" },
+    }),
+    prisma.shift.findMany({
+      where: { userId: id, date: { gte: month.start, lte: month.end } },
+      select: { date: true, startMinutes: true, endMinutes: true, breakMinutes: true },
+    }),
+  ]);
 
   const { days, totalNet } = groupByDay(entries, user.minBreakMinutes);
+  const plannedByDay = plannedMinutesByDay(shifts);
   const pendingCount = entries.filter(
     (e) => e.status === "PENDING" && e.end !== null,
   ).length;
@@ -64,21 +72,34 @@ export default async function MitarbeiterZeitenPage({
         <p className="text-sm text-slate-500 dark:text-slate-400">Keine Einträge in diesem Monat.</p>
       ) : (
         <div className="flex flex-col gap-4">
-          {days.map((day) => (
-            <div key={day.key} className="rounded-lg border border-slate-200 dark:border-slate-800">
-              <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2 text-sm dark:border-slate-800">
-                <span className="font-medium">{day.label}</span>
-                <span className="tabular-nums text-slate-600 dark:text-slate-300">
-                  {formatMinutes(day.netMinutes)}
-                </span>
+          {days.map((day) => {
+            const planned = plannedByDay.get(day.key) ?? null;
+            const deviates =
+              !day.entries.some((e) => e.running) &&
+              planned != null &&
+              Math.abs(day.netMinutes - planned) > PLAN_DEVIATION_THRESHOLD_MINUTES;
+            return (
+              <div key={day.key} className="rounded-lg border border-slate-200 dark:border-slate-800">
+                <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2 text-sm dark:border-slate-800">
+                  <span className="font-medium">{day.label}</span>
+                  <span
+                    className={`tabular-nums ${deviates ? "font-semibold text-red-600 dark:text-red-400" : "text-slate-600 dark:text-slate-300"}`}
+                  >
+                    {formatMinutes(day.netMinutes)}
+                  </span>
+                </div>
+                <ul className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                  {day.entries.map((entry) => (
+                    <AdminEntryRow
+                      key={entry.id}
+                      entry={entry}
+                      plannedMinutes={day.entries.length === 1 ? planned : null}
+                    />
+                  ))}
+                </ul>
               </div>
-              <ul className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                {day.entries.map((entry) => (
-                  <AdminEntryRow key={entry.id} entry={entry} />
-                ))}
-              </ul>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import type { ViewEntry } from "@/lib/time-entry-view";
 import { formatMinutes } from "@/lib/worktime";
+import { PLAN_DEVIATION_THRESHOLD_MINUTES } from "@/lib/shift";
 import { adminDeleteEntry, adminSaveEntry, confirmEntry } from "./actions";
 import { EntryForm } from "./entry-form";
 
@@ -10,10 +11,13 @@ export function AdminEntryRow({
   entry,
   showConfirm = true,
   dateLabel,
+  plannedMinutes,
 }: {
   entry: ViewEntry;
   showConfirm?: boolean;
   dateLabel?: string;
+  /** Geplante Netto-Minuten für diesen Tag (Summe aller Schichten), falls eine Schicht existiert. */
+  plannedMinutes?: number | null;
 }) {
   const [mode, setMode] = useState<"view" | "edit" | "confirmDelete">("view");
   const [busy, start] = useTransition();
@@ -25,6 +29,11 @@ export function AdminEntryRow({
       : entry.breakOverride != null
         ? `${entry.effectiveBreak} Min (manuell)`
         : `${entry.effectiveBreak} Min`;
+
+  const deviates =
+    entry.netMinutes != null &&
+    plannedMinutes != null &&
+    Math.abs(entry.netMinutes - plannedMinutes) > PLAN_DEVIATION_THRESHOLD_MINUTES;
 
   function run(fn: () => Promise<unknown>) {
     setErr(null);
@@ -49,8 +58,15 @@ export function AdminEntryRow({
             {entry.startTime}{entry.endTime ? `–${entry.endTime}` : " … (läuft)"}
           </span>
           {entry.netMinutes != null && (
-            <span className="tabular-nums text-slate-600 dark:text-slate-300">
+            <span
+              className={`tabular-nums ${deviates ? "font-semibold text-red-600 dark:text-red-400" : "text-slate-600 dark:text-slate-300"}`}
+            >
               {formatMinutes(entry.netMinutes)}
+            </span>
+          )}
+          {deviates && (
+            <span className="text-xs font-medium text-red-600 dark:text-red-400">
+              ⚠ weicht &gt;1 h vom Plan ab
             </span>
           )}
           <span className="text-xs text-slate-400">Pause {breakText}</span>

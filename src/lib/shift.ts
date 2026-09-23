@@ -38,6 +38,22 @@ export function formatShiftRange(startMinutes: number, endMinutes: number): stri
   return `${minutesToHHMM(startMinutes)}–${minutesToHHMM(endMinutes)}${over ? " (+1)" : ""}`;
 }
 
+/** Geplante Netto-Minuten je Tag (Summe aller Schichten des Tages), z. B. für einen Monat. */
+export function plannedMinutesByDay(
+  shifts: { date: Date; startMinutes: number; endMinutes: number; breakMinutes: number | null }[],
+): Map<string, number> {
+  const map = new Map<string, number>();
+  for (const s of shifts) {
+    const key = dateKey(s.date);
+    const dur = shiftDurationMinutes(s.startMinutes, s.endMinutes, s.breakMinutes);
+    map.set(key, (map.get(key) ?? 0) + dur);
+  }
+  return map;
+}
+
+/** Ab welcher Abweichung (Minuten) zwischen Ist und geplanter Schicht gewarnt wird. */
+export const PLAN_DEVIATION_THRESHOLD_MINUTES = 60;
+
 /* ------------------------------------------------------------------ Wochen */
 
 /** Reiner Kalendertag-String einer @db.Date (immer UTC-Basis). */

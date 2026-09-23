@@ -2,6 +2,7 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { autoCloseOverrunEntries } from "@/lib/auto-clockout";
 
 export type CurrentUser = {
   id: string;
@@ -18,6 +19,10 @@ export type CurrentUser = {
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const session = await auth();
   if (!session?.user?.id) return null;
+
+  // Läuft einmal pro Request (durch React cache() memoisiert) und schließt
+  // Zeiterfassungen, die die gesetzliche Höchstarbeitszeit überschritten haben.
+  await autoCloseOverrunEntries();
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },

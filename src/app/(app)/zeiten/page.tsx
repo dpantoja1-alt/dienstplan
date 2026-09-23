@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { groupByDay } from "@/lib/time-entry-view";
 import { formatMinutes } from "@/lib/worktime";
 import { monthRange } from "@/lib/time-zone";
+import { plannedMinutesByDay, PLAN_DEVIATION_THRESHOLD_MINUTES } from "@/lib/shift";
 import { StampClock } from "./stamp-clock";
 import { MonthNav } from "./month-nav";
 import { OwnEntryRow } from "./own-entry-row";
@@ -23,7 +24,7 @@ export default async function ZeitenPage({
   });
   const minBreak = me?.minBreakMinutes ?? 0;
 
-  const [openEntry, entries] = await Promise.all([
+  const [openEntry, entries, shifts] = await Promise.all([
     prisma.timeEntry.findFirst({
       where: { userId: session.user.id, end: null },
       orderBy: { start: "desc" },
@@ -35,9 +36,14 @@ export default async function ZeitenPage({
       },
       orderBy: { start: "desc" },
     }),
+    prisma.shift.findMany({
+      where: { userId: session.user.id, date: { gte: month.start, lte: month.end } },
+      select: { date: true, startMinutes: true, endMinutes: true, breakMinutes: true },
+    }),
   ]);
 
   const { days, totalNet } = groupByDay(entries, minBreak);
+  const plannedByDay = plannedMinutesByDay(shifts);
 
   return (
     <div className="flex flex-col gap-5">
@@ -66,21 +72,34 @@ export default async function ZeitenPage({
         </p>
       ) : (
         <div className="flex flex-col gap-4">
-          {days.map((day) => (
-            <div key={day.key} className="rounded-lg border border-slate-200 dark:border-slate-800">
-              <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2 text-sm dark:border-slate-800">
-                <span className="font-medium">{day.label}</span>
-                <span className="tabular-nums text-slate-600 dark:text-slate-300">
-                  {formatMinutes(day.netMinutes)}
-                </span>
+          {days.map((day) => {
+            const planned = plannedByDay.get(day.key) ?? null;
+            const deviates =
+              !day.entries.some((e) => e.running) &&
+              planned != null &&
+              Math.abs(day.netMinutes - planned) > PLAN_DEVIATION_THRESHOLD_MINUTES;
+            return (
+              <div key={day.key} className="rounded-lg border border-slate-200 dark:border-slate-800">
+                <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2 text-sm dark:border-slate-800">
+                  <span className="font-medium">{day.label}</span>
+                  <span
+                    className={`tabular-nums ${deviates ? "font-semibold text-red-600 dark:text-red-400" : "text-slate-600 dark:text-slate-300"}`}
+                  >
+                    {formatMinutes(day.netMinutes)}
+                  </span>
+                </div>
+                <ul className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                  {day.entries.map((entry) => (
+                    <OwnEntryRow
+                      key={entry.id}
+                      entry={entry}
+                      plannedMinutes={day.entries.length === 1 ? planned : null}
+                    />
+                  ))}
+                </ul>
               </div>
-              <ul className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                {day.entries.map((entry) => (
-                  <OwnEntryRow key={entry.id} entry={entry} />
-                ))}
-              </ul>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
