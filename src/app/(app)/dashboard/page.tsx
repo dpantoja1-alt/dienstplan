@@ -19,7 +19,7 @@ function Card({ href, value, label }: { href: string; value: string; label: stri
   return (
     <Link
       href={href as never}
-      className="rounded-lg border border-slate-200 p-4 transition hover:border-slate-400 dark:border-slate-800 dark:hover:border-slate-600"
+      className="rounded-xl border border-line bg-surface p-4 shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_2px_0_var(--border),0_6px_12px_rgba(33,39,33,0.07)] transition hover:-translate-y-0.5 hover:border-brand hover:shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_3px_0_var(--border),0_10px_16px_rgba(33,39,33,0.1)] active:translate-y-px"
     >
       <div className="text-3xl font-semibold tabular-nums">{value}</div>
       <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">{label}</div>
@@ -44,7 +44,7 @@ async function UpcomingShifts({ userId }: { userId: string }) {
   }
 
   return (
-    <ul className="mt-2 divide-y divide-slate-100 rounded-lg border border-slate-200 dark:divide-slate-800/60 dark:border-slate-800">
+    <ul className="mt-2 divide-y divide-slate-100 rounded-xl border border-line bg-surface shadow-[0_2px_0_var(--border)] dark:divide-slate-800/60">
       {shifts.map((s) => (
         <li key={s.id} className="flex items-center gap-3 px-3 py-2 text-sm">
           <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.color }} />

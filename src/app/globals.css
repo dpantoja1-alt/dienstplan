@@ -166,3 +166,86 @@ button[class*="bg-emerald-600"]:active:not(:disabled) {
 button:disabled {
   cursor: not-allowed;
 }
+
+/*
+ * Weiche Kacheln: alle Karten/Listen mit rounded-lg + border-slate-200
+ * bekommen weiße Fläche, feine Unterkante und leichten Schatten.
+ * Formular-Boxen (bg-slate-50) bleiben flach.
+ */
+:where(div, section, ul, a)[class*="rounded-lg"][class*="border-slate-200"]:not([class*="bg-slate-50"]):not([class*="bg-amber"]):not([class*="border-red"]) {
+  background-color: var(--surface);
+  border-color: var(--border);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 2px 0 var(--border),
+    0 6px 12px rgba(33, 39, 33, 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :where(div, section, ul, a)[class*="rounded-lg"][class*="border-slate-200"]:not([class*="bg-slate-50"]):not([class*="bg-amber"]):not([class*="border-red"]) {
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.05) inset,
+      0 2px 0 rgba(0, 0, 0, 0.35),
+      0 6px 12px rgba(0, 0, 0, 0.25);
+  }
+}
+
+/* Weitere plastische Buttons: rot gefüllt, grün/rot im Umriss */
+:root {
+  --btn-edge-red-fill: #8f1d1d;
+}
+
+button[class*="bg-red-600"] {
+  background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.25), rgba(0, 0, 0, 0.08));
+  border: 1px solid var(--btn-edge-red-fill);
+  border-radius: 0.5rem;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.35) inset,
+    0 4px 0 var(--btn-edge-red-fill),
+    0 7px 10px rgba(33, 39, 33, 0.28);
+  transition: transform 80ms ease, box-shadow 80ms ease, filter 120ms ease;
+}
+
+button[class*="border-emerald-600"],
+button[class*="border-red-300"] {
+  background-image: linear-gradient(to bottom, #ffffff, #e9e5d8);
+  border-radius: 0.5rem;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 4px 0 var(--btn-edge),
+    0 7px 10px rgba(33, 39, 33, 0.2);
+  transition: transform 80ms ease, box-shadow 80ms ease, filter 120ms ease;
+}
+
+button[class*="bg-red-600"]:hover:not(:disabled),
+button[class*="border-emerald-600"]:hover:not(:disabled),
+button[class*="border-red-300"]:hover:not(:disabled) {
+  filter: brightness(1.04);
+  transform: translateY(-1px);
+}
+
+button[class*="bg-red-600"]:active:not(:disabled),
+button[class*="border-emerald-600"]:active:not(:disabled),
+button[class*="border-red-300"]:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--btn-edge), 0 1px 2px rgba(33, 39, 33, 0.2);
+}
+
+/* Kleine Buttons: dünnere Kante */
+button[class*="text-xs"][class*="bg-red-600"],
+button[class*="text-xs"][class*="bg-emerald-600"],
+button[class*="text-xs"][class*="border-slate-300"] {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.4) inset,
+    0 3px 0 var(--btn-edge-brand),
+    0 5px 8px rgba(33, 39, 33, 0.2);
+}
+button[class*="text-xs"][class*="bg-red-600"] {
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35) inset, 0 3px 0 var(--btn-edge-red-fill), 0 5px 8px rgba(33, 39, 33, 0.25);
+}
+button[class*="text-xs"][class*="bg-emerald-600"] {
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35) inset, 0 3px 0 var(--btn-edge-green), 0 5px 8px rgba(33, 39, 33, 0.25);
+}
+button[class*="text-xs"][class*="border-slate-300"] {
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 3px 0 var(--btn-edge), 0 5px 8px rgba(33, 39, 33, 0.15);
+}
