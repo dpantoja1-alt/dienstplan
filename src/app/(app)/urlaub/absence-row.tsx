@@ -1,11 +1,14 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import type { AbsenceKind } from "@/lib/absence-types";
 import {
   absenceDayCount,
   absenceTypeLabel,
   formatAbsenceRange,
   statusLabel,
+  VACATION_TYPES,
+  OTHER_ABSENCE_TYPES,
 } from "@/lib/absence-view";
 import { cancelOwnAbsence, decideAbsence, deleteAbsence } from "./actions";
 import { AdminAbsenceForm } from "./admin-absence-form";
@@ -14,7 +17,7 @@ export type AbsenceView = {
   id: string;
   userId: string;
   userName?: string;
-  type: "VACATION" | "SICK" | "OTHER";
+  type: AbsenceKind;
   startKey: string;
   endKey: string;
   halfDay: boolean;
@@ -62,6 +65,7 @@ export function AbsenceRow({
         <AdminAbsenceForm
           users={users}
           lockUser
+          types={a.type === "VACATION" ? VACATION_TYPES : OTHER_ABSENCE_TYPES}
           submitLabel="Übernehmen"
           defaults={{
             entryId: a.id,

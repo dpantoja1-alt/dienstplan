@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
+import { ABSENCE_TYPES, typesOfGroup, type AbsenceKind } from "@/lib/absence-types";
 import { adminSaveAbsence, type AbsenceFormState } from "./actions";
 
 const inputCls =
@@ -10,7 +11,7 @@ const inputCls =
 export type AbsenceDefaults = {
   entryId?: string;
   userId: string;
-  type: "VACATION" | "SICK" | "OTHER";
+  type: AbsenceKind;
   start: string;
   end: string;
   halfDay: boolean;
@@ -34,6 +35,7 @@ export function AdminAbsenceForm({
   users,
   defaults,
   lockUser = false,
+  types = typesOfGroup("other"),
   submitLabel = "Eintragen",
   onDone,
   onCancel,
@@ -41,6 +43,7 @@ export function AdminAbsenceForm({
   users: { id: string; name: string }[];
   defaults: AbsenceDefaults;
   lockUser?: boolean;
+  types?: { value: AbsenceDefaults["type"]; label: string }[];
   submitLabel?: string;
   onDone?: () => void;
   onCancel?: () => void;
@@ -51,6 +54,7 @@ export function AdminAbsenceForm({
   );
   const [start, setStart] = useState(defaults.start);
   const [end, setEnd] = useState(defaults.end);
+  const [kind, setKind] = useState<AbsenceKind>(defaults.type);
   const singleDay = start !== "" && start === end;
 
   useEffect(() => {
@@ -79,13 +83,19 @@ export function AdminAbsenceForm({
         )}
         <label className="flex flex-col gap-1 text-xs font-medium">
           Art
-          <select name="type" defaultValue={defaults.type} className={inputCls}>
-            <option value="VACATION">Urlaub</option>
-            <option value="SICK">Krank</option>
-            <option value="OTHER">Sonstiges</option>
+          <select
+            name="type"
+            value={kind}
+            onChange={(e) => setKind(e.target.value as AbsenceKind)}
+            className={inputCls}
+          >
+            {types.map((t) => (
+              <option key={t.value} value={t.value}>{t.label}</option>
+            ))}
           </select>
         </label>
       </div>
+      <p className="text-xs text-slate-500 dark:text-slate-400">{ABSENCE_TYPES[kind].hint}</p>
 
       <div className="flex flex-wrap gap-3">
         <label className="flex flex-col gap-1 text-xs font-medium">

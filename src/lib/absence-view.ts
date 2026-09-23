@@ -1,14 +1,15 @@
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { dateFromKey } from "./shift";
+import { ABSENCE_TYPES, typesOfGroup, type AbsenceKind } from "./absence-types";
 import { absenceWorkdays, type AbsenceSpan } from "./soll";
 
-export function absenceTypeLabel(type: "VACATION" | "SICK" | "OTHER"): string {
-  return type === "VACATION" ? "Urlaub" : type === "SICK" ? "Krank" : "Sonstiges";
+export function absenceTypeLabel(type: AbsenceKind): string {
+  return ABSENCE_TYPES[type].label;
 }
 
-export function absenceTypeColor(type: "VACATION" | "SICK" | "OTHER"): string {
-  return type === "VACATION" ? "#0ea5e9" : type === "SICK" ? "#ef4444" : "#64748b";
+export function absenceTypeColor(type: AbsenceKind): string {
+  return ABSENCE_TYPES[type].color;
 }
 
 export function statusLabel(status: "PENDING" | "APPROVED" | "REJECTED"): string {
@@ -43,3 +44,11 @@ export function absenceDayCount(span: {
   const s: AbsenceSpan = { ...span, type: "VACATION" };
   return absenceWorkdays([s], span.startKey, span.endKey);
 }
+
+export type { AbsenceKind } from "./absence-types";
+
+/** Arten, die im Bereich "Urlaub" verwaltet werden. */
+export const VACATION_TYPES = typesOfGroup("vacation");
+
+/** Arten, die im Bereich "Abwesenheiten" verwaltet werden. */
+export const OTHER_ABSENCE_TYPES = typesOfGroup("other");

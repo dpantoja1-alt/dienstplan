@@ -111,6 +111,7 @@ export default async function DashboardPage() {
             value={openInvites > 0 ? String(openInvites) : "→"}
             label={openInvites > 0 ? "offene Einladungen" : "Mitarbeiter"}
           />
+          <Card href="/handbuch" value="?" label="Handbuch" />
         </div>
 
         <h2 className="mt-8 text-lg font-semibold">Meine nächsten Schichten</h2>
@@ -154,6 +155,7 @@ export default async function DashboardPage() {
         />
         <Card href="/urlaub" value={String(vacation.remaining)} label="Resturlaub (Tage)" />
         <Card href="/plan" value="→" label="Dienstplan ansehen" />
+        <Card href="/handbuch" value="?" label="Handbuch" />
       </div>
 
       <h2 className="mt-8 text-lg font-semibold">Meine nächsten Schichten</h2>

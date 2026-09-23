@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { requireUser, requireAdmin } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
+import { ABSENCE_KINDS, type AbsenceKind } from "@/lib/absence-types";
 import { dateFromKey } from "@/lib/shift";
 
 export type AbsenceFormState = { error?: string; ok?: boolean };
@@ -62,6 +63,7 @@ export async function requestVacation(
     },
   });
   revalidatePath("/urlaub");
+  revalidatePath("/abwesenheiten");
   revalidatePath("/urlaub/antraege");
   return { ok: true };
 }
@@ -77,6 +79,7 @@ export async function cancelOwnAbsence(id: string) {
   }
   await prisma.absence.delete({ where: { id } });
   revalidatePath("/urlaub");
+  revalidatePath("/abwesenheiten");
   revalidatePath("/urlaub/antraege");
 }
 
@@ -85,7 +88,7 @@ export async function cancelOwnAbsence(id: string) {
 const adminSchema = z.object({
   entryId: z.string().optional(),
   userId: z.string().min(1, "Kein Mitarbeiter gewählt"),
-  type: z.enum(["VACATION", "SICK", "OTHER"]),
+  type: z.enum(ABSENCE_KINDS as [AbsenceKind, ...AbsenceKind[]]),
 });
 
 export async function adminSaveAbsence(
@@ -124,6 +127,7 @@ export async function adminSaveAbsence(
     });
   }
   revalidatePath("/urlaub");
+  revalidatePath("/abwesenheiten");
   revalidatePath("/urlaub/antraege");
   revalidatePath("/stundenkonto");
   revalidatePath("/plan");
@@ -134,7 +138,7 @@ export async function adminSaveAbsence(
 export async function quickAddAbsence(
   userId: string,
   dateKey: string,
-  type: "VACATION" | "SICK" | "OTHER",
+  type: AbsenceKind,
 ) {
   await requireAdmin();
   if (!keyRe.test(dateKey)) throw new Error("Ungültiges Datum.");
@@ -144,6 +148,7 @@ export async function quickAddAbsence(
   });
   revalidatePath("/plan");
   revalidatePath("/urlaub");
+  revalidatePath("/abwesenheiten");
   revalidatePath("/stundenkonto");
 }
 
@@ -154,6 +159,7 @@ export async function decideAbsence(id: string, approve: boolean) {
     data: { status: approve ? "APPROVED" : "REJECTED", decidedAt: new Date() },
   });
   revalidatePath("/urlaub");
+  revalidatePath("/abwesenheiten");
   revalidatePath("/urlaub/antraege");
   revalidatePath("/stundenkonto");
   revalidatePath("/plan");
@@ -163,6 +169,7 @@ export async function deleteAbsence(id: string) {
   await requireAdmin();
   await prisma.absence.delete({ where: { id } });
   revalidatePath("/urlaub");
+  revalidatePath("/abwesenheiten");
   revalidatePath("/urlaub/antraege");
   revalidatePath("/stundenkonto");
   revalidatePath("/plan");

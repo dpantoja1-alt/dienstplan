@@ -1,4 +1,5 @@
 import { isNrwHoliday } from "./holidays";
+import { ABSENCE_TYPES, type AbsenceKind } from "./absence-types";
 
 /* --------------------------------------------------------------- Datums-Iteration */
 
@@ -46,7 +47,7 @@ export function dailySollMinutes(weeklyHours: number, workDaysPerWeek: number): 
 }
 
 export type AbsenceSpan = {
-  type: "VACATION" | "SICK" | "OTHER";
+  type: AbsenceKind;
   startKey: string;
   endKey: string;
   halfDay: boolean;
@@ -81,11 +82,44 @@ export function absenceWorkdays(
   return sum;
 }
 
+/**
+ * Wirkung der Abwesenheiten auf das Stundenkonto, in Arbeitstagen:
+ * credit = Tage mit Gutschrift, sollFree = Tage, an denen die Sollzeit entfällt.
+ * Halbe Tage zählen 0,5; bei Überschneidung gewinnt "Soll entfällt".
+ */
+export function absenceEffectDays(
+  absences: AbsenceSpan[],
+  rangeStartKey: string,
+  rangeEndKey: string,
+): { credit: number; sollFree: number } {
+  const credit = new Map<string, number>();
+  const free = new Map<string, number>();
+  for (const a of absences) {
+    const effect = ABSENCE_TYPES[a.type].effect;
+    if (effect === "none") continue;
+    const target = effect === "credit" ? credit : free;
+    const from = a.startKey > rangeStartKey ? a.startKey : rangeStartKey;
+    const to = a.endKey < rangeEndKey ? a.endKey : rangeEndKey;
+    if (from > to) continue;
+    const single = a.startKey === a.endKey;
+    for (const k of iterateDayKeys(from, to)) {
+      if (!isWorkday(k)) continue;
+      target.set(k, Math.max(target.get(k) ?? 0, a.halfDay && single ? 0.5 : 1));
+    }
+  }
+  let creditSum = 0;
+  let freeSum = 0;
+  for (const f of free.values()) freeSum += f;
+  for (const [k, c] of credit) creditSum += Math.min(c, 1 - (free.get(k) ?? 0));
+  return { credit: creditSum, sollFree: freeSum };
+}
+
 export type MonthAccount = {
   workdays: number;
   dailySollMinutes: number;
-  sollMinutes: number; // reguläres Soll (ohne Abwesenheiten)
-  absenceDays: number; // Urlaub + Krank + Sonstige (Arbeitstage)
+  sollMinutes: number; // Soll nach Abzug der Tage, an denen die Sollzeit entfällt (unbezahlt, Elternzeit …)
+  sollFreeDays: number; // Arbeitstage ohne Sollzeit (unbezahlte Abwesenheit)
+  absenceDays: number; // bezahlte Abwesenheit mit Gutschrift (Urlaub, Krank, Sonderurlaub …)
   creditedMinutes: number; // absenceDays * dailySoll
   workedMinutes: number; // Ist aus bestätigter Zeiterfassung
   adjustmentMinutes: number; // manuelle Buchungen (z. B. Überstunden-Auszahlung, meist negativ)
@@ -105,8 +139,8 @@ export function monthAccount(params: {
   const { start, end } = monthRangeKeys(params.year, params.month1);
   const workdays = countWorkdays(start, end);
   const daily = dailySollMinutes(params.weeklyHours, params.workDaysPerWeek);
-  const sollMinutes = workdays * daily;
-  const absenceDays = absenceWorkdays(params.absences, start, end);
+  const { credit: absenceDays, sollFree: sollFreeDays } = absenceEffectDays(params.absences, start, end);
+  const sollMinutes = Math.round((workdays - sollFreeDays) * daily);
   const creditedMinutes = Math.round(absenceDays * daily);
   const adjustmentMinutes = params.adjustmentMinutes ?? 0;
   const balanceMinutes = params.workedMinutes + creditedMinutes - sollMinutes;
@@ -114,6 +148,7 @@ export function monthAccount(params: {
     workdays,
     dailySollMinutes: daily,
     sollMinutes,
+    sollFreeDays,
     absenceDays,
     creditedMinutes,
     workedMinutes: params.workedMinutes,

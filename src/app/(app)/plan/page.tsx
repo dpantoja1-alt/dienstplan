@@ -131,15 +131,17 @@ export default async function PlanPage({ searchParams }: PageProps<"/plan">) {
     const from = dateKey(a.startDate);
     const to = dateKey(a.endDate);
     const single = from === to;
+    const shown = isAdmin || a.type === "VACATION";
     for (const d of week.days) {
       if (d.key < from || d.key > to || !isWorkday(d.key)) continue;
       gridAbsences.push({
         id: a.id,
         userId: a.userId,
         dayKey: d.key,
-        type: a.type,
-        label: `${absenceTypeLabel(a.type)}${a.halfDay && single ? " ½" : ""}`,
-        color: absenceTypeColor(a.type),
+        // Kollegen sehen nur Urlaub; Krankheit, Elternzeit usw. sind personenbezogene Gesundheits-/Familiendaten
+        type: shown ? a.type : "OTHER",
+        label: `${shown ? absenceTypeLabel(a.type) : "Abwesend"}${a.halfDay && single ? " ½" : ""}`,
+        color: shown ? absenceTypeColor(a.type) : "#64748b",
         multiDay: !single,
       });
     }

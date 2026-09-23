@@ -60,9 +60,12 @@ async function AccountTable({
     ["Sollzeit Monat", formatMinutes(acc.sollMinutes)],
     ["Ist (bestätigt gearbeitet)", formatMinutes(acc.workedMinutes)],
     [
-      `Urlaub / Krank gutgeschrieben (${acc.absenceDays} Tag${acc.absenceDays === 1 ? "" : "e"})`,
+      `Bezahlte Abwesenheit gutgeschrieben (${acc.absenceDays} Tag${acc.absenceDays === 1 ? "" : "e"})`,
       formatMinutes(acc.creditedMinutes),
     ],
+    ...(acc.sollFreeDays > 0
+      ? ([[`Sollzeit entfällt (unbezahlt / Elternzeit, ${acc.sollFreeDays} Tag${acc.sollFreeDays === 1 ? "" : "e"})`, "im Soll berücksichtigt"]] as [string, string][])
+      : []),
   ];
 
   return (
@@ -223,7 +226,7 @@ export default async function StundenkontoPage({
 
       <p className="text-xs text-slate-400">
         Ist zählt nur bestätigte Zeiterfassung. Feiertage senken die Sollzeit
-        automatisch, genehmigter Urlaub und Krankheit gelten als erfüllt.
+        automatisch, bezahlte Abwesenheiten (Urlaub, Krankheit, Sonderurlaub …) gelten als erfüllt, bei unbezahlten Abwesenheiten entfällt die Sollzeit.
       </p>
 
       {isAdmin && (

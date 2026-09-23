@@ -27,8 +27,14 @@ enum TimeEntryStatus {
 
 enum AbsenceType {
   VACATION // Urlaub – reduziert den Jahresanspruch
-  SICK // Krankheit
-  OTHER // Sonstiges / unbezahlt
+  SICK // Krankheit (Entgeltfortzahlung)
+  SICK_CHILD // Kind krank (§ 45 SGB V) – Sollzeit entfällt
+  SPECIAL_LEAVE // Sonderurlaub (§ 616 BGB) – bezahlt
+  TRAINING // Berufsschule / Fortbildung – Arbeitszeit
+  PARENTAL // Elternzeit / Mutterschutz – Sollzeit entfällt
+  UNPAID // Unbezahlter Urlaub – Sollzeit entfällt
+  TIME_OFF // Überstundenabbau – Sollzeit bleibt
+  OTHER // Sonstiges (bezahlt)
 }
 
 enum AbsenceStatus {

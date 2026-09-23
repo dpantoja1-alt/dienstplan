@@ -7,17 +7,18 @@ import { getMonthReport } from "@/lib/report";
 import { formatMinutes } from "@/lib/worktime";
 import { PrintButton } from "./print-button";
 
+import type { AbsenceKind } from "@/lib/absence-types";
+import { absenceTypeLabel } from "@/lib/absence-view";
+
 export const metadata: Metadata = { title: "Stundennachweis" };
 
 function decimal(min: number): string {
   return (min / 60).toFixed(2).replace(".", ",");
 }
 
-function absenceLabel(a: { type: string; halfDay: boolean } | null): string {
+function absenceLabel(a: { type: AbsenceKind; halfDay: boolean } | null): string {
   if (!a) return "";
-  if (a.type === "VACATION") return a.halfDay ? "Urlaub ½" : "Urlaub";
-  if (a.type === "SICK") return "Krank";
-  return "Sonstiges";
+  return absenceTypeLabel(a.type) + (a.halfDay ? " ½" : "");
 }
 
 export default async function StundennachweisPage({
@@ -100,7 +101,7 @@ export default async function StundennachweisPage({
           <Row label="Soll gesamt" value={`${formatMinutes(t.sollMinutes)} (${decimal(t.sollMinutes)})`} />
           <Row label="Ist gearbeitet" value={`${formatMinutes(t.workedMinutes)} (${decimal(t.workedMinutes)})`} />
           <Row
-            label={`Urlaub/Krank (${t.absenceDays} Tage)`}
+            label={`Bezahlte Abwesenheit (${t.absenceDays} Tage)`}
             value={`${formatMinutes(t.creditedMinutes)} (${decimal(t.creditedMinutes)})`}
           />
           <Row label="Saldo Monat" value={formatMinutes(t.balanceMinutes)} strong />

@@ -3,6 +3,8 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 
 import { prisma } from "./prisma";
+import { ABSENCE_TYPES, type AbsenceKind } from "./absence-types";
+import { absenceTypeLabel } from "./absence-view";
 import { monthRange, dayKey as tzDayKey } from "./time-zone";
 import { toViewEntry } from "./time-entry-view";
 import { nrwHolidayName } from "./holidays";
@@ -23,7 +25,7 @@ export type ReportDay = {
   planned: string[]; // "Früh 06:00–14:00"
   worked: { from: string; to: string; breakMinutes: number; netMinutes: number }[];
   workedMinutes: number;
-  absence: { type: "VACATION" | "SICK" | "OTHER"; halfDay: boolean } | null;
+  absence: { type: AbsenceKind; halfDay: boolean } | null;
   sollMinutes: number;
   creditedMinutes: number;
 };
@@ -46,8 +48,6 @@ export type MonthReport = {
     pendingEntries: number;
   };
 };
-
-const absenceTypeMap = { VACATION: "VACATION", SICK: "SICK", OTHER: "OTHER" } as const;
 
 export async function getMonthReport(
   userId: string,
@@ -133,14 +133,14 @@ export async function getMonthReport(
   }
 
   // Abwesenheit nach Tag
-  const absenceByDay = new Map<string, { type: "VACATION" | "SICK" | "OTHER"; halfDay: boolean }>();
+  const absenceByDay = new Map<string, { type: AbsenceKind; halfDay: boolean }>();
   for (const a of absences) {
     const from = a.startDate.toISOString().slice(0, 10);
     const to = a.endDate.toISOString().slice(0, 10);
     const single = from === to;
     for (const k of iterateDayKeys(from < startKey ? startKey : from, to > endKey ? endKey : to)) {
       if (!isWorkday(k)) continue;
-      absenceByDay.set(k, { type: absenceTypeMap[a.type], halfDay: a.halfDay && single });
+      absenceByDay.set(k, { type: a.type, halfDay: a.halfDay && single });
     }
   }
 
@@ -149,9 +149,10 @@ export async function getMonthReport(
     const worked = workedByDay.get(k) ?? [];
     const workedMinutes = worked.reduce((s, w) => s + w.netMinutes, 0);
     const absence = absenceByDay.get(k) ?? null;
-    const soll = workday ? daily : 0;
-    const creditFactor = absence ? (absence.halfDay ? 0.5 : 1) : 0;
-    const credited = workday ? Math.round(creditFactor * daily) : 0;
+    const factor = absence ? (absence.halfDay ? 0.5 : 1) : 0;
+    const effect = absence ? ABSENCE_TYPES[absence.type].effect : "none";
+    const soll = workday ? Math.round((effect === "sollFree" ? 1 - factor : 1) * daily) : 0;
+    const credited = workday && effect === "credit" ? Math.round(factor * daily) : 0;
     return {
       key: k,
       weekday: format(new Date(`${k}T00:00:00.000Z`), "EEEEEE", { locale: de }),
@@ -171,7 +172,11 @@ export async function getMonthReport(
   const workedMinutes = days.reduce((s, d) => s + d.workedMinutes, 0);
   const creditedMinutes = days.reduce((s, d) => s + d.creditedMinutes, 0);
   const absenceDays = days.reduce(
-    (s, d) => s + (d.absence ? (d.absence.halfDay ? 0.5 : 1) : 0),
+    (s, d) =>
+      s +
+      (d.absence && ABSENCE_TYPES[d.absence.type].effect === "credit" && d.isWorkday
+        ? d.absence.halfDay ? 0.5 : 1
+        : 0),
     0,
   );
 
@@ -225,9 +230,7 @@ export function reportToCsv(report: MonthReport): string {
     const worked = d.worked.map((w) => `${w.from}-${w.to}`).join(" / ");
     const pause = d.worked.reduce((s, w) => s + w.breakMinutes, 0);
     const abs = d.absence
-      ? d.absence.type === "VACATION"
-        ? d.absence.halfDay ? "Urlaub ½" : "Urlaub"
-        : d.absence.type === "SICK" ? "Krank" : "Sonstiges"
+      ? absenceTypeLabel(d.absence.type) + (d.absence.halfDay ? " ½" : "")
       : "";
     rows.push([
       format(new Date(`${d.key}T00:00:00.000Z`), "dd.MM.yyyy"),
@@ -246,7 +249,7 @@ export function reportToCsv(report: MonthReport): string {
   rows.push([]);
   rows.push(["Summe Soll (h)", dec(t.sollMinutes)]);
   rows.push(["Summe Ist gearbeitet (h)", dec(t.workedMinutes)]);
-  rows.push(["Urlaub/Krank gutgeschrieben (h)", dec(t.creditedMinutes)]);
+  rows.push(["Bezahlte Abwesenheit gutgeschrieben (h)", dec(t.creditedMinutes)]);
   rows.push(["Saldo Monat (h)", dec(t.balanceMinutes)]);
   if (t.adjustmentMinutes !== 0) {
     rows.push(["Überstunden ausgezahlt / Korrektur (h)", dec(t.adjustmentMinutes)]);

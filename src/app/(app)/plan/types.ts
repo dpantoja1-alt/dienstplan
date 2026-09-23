@@ -1,3 +1,4 @@
+import type { AbsenceKind } from "@/lib/absence-types";
 export type GridUser = {
   id: string;
   name: string;
@@ -43,7 +44,7 @@ export type GridAbsence = {
   id: string;
   userId: string;
   dayKey: string;
-  type: "VACATION" | "SICK" | "OTHER";
+  type: AbsenceKind;
   label: string; // "Urlaub", "Krank", "Urlaub ½"
   color: string;
   multiDay: boolean; // Teil einer mehrtägigen Abwesenheit

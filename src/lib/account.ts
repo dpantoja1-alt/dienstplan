@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "./prisma";
+import type { AbsenceKind } from "./absence-types";
 import { monthRange } from "./time-zone";
 import { groupByDay } from "./time-entry-view";
 import {
@@ -16,7 +17,7 @@ function toKey(d: Date): string {
 }
 
 type AbsenceRow = {
-  type: "VACATION" | "SICK" | "OTHER";
+  type: AbsenceKind;
   startDate: Date;
   endDate: Date;
   halfDay: boolean;

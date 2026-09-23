@@ -4,15 +4,12 @@ import { useState, useTransition } from "react";
 import { formatShiftRange, minutesToHHMM } from "@/lib/shift";
 import { assignShiftFromTemplate, removeShift, saveShiftAsTemplate } from "./actions";
 import { quickAddAbsence, deleteAbsence } from "@/app/(app)/urlaub/actions";
+import { ABSENCE_KINDS, ABSENCE_TYPES } from "@/lib/absence-types";
 import { absenceTypeLabel } from "@/lib/absence-view";
 import { CustomShiftForm } from "./custom-shift-form";
 import type { GridAbsence, GridShift, GridTemplate } from "./types";
 
-const ABSENCE_TYPES: { type: "VACATION" | "SICK" | "OTHER"; label: string }[] = [
-  { type: "VACATION", label: "Urlaub" },
-  { type: "SICK", label: "Krank" },
-  { type: "OTHER", label: "Sonstiges" },
-];
+const ABSENCE_OPTIONS = ABSENCE_KINDS.map((type) => ({ type, label: ABSENCE_TYPES[type].label }));
 
 export function CellEditor({
   userId,
@@ -190,7 +187,7 @@ export function CellEditor({
           </div>
         ) : (
           <div className="mt-1 flex flex-wrap gap-2">
-            {ABSENCE_TYPES.map((a) => (
+            {ABSENCE_OPTIONS.map((a) => (
               <button
                 key={a.type}
                 disabled={busy}

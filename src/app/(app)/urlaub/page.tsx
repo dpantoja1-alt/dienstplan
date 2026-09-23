@@ -8,11 +8,13 @@ import { getVacationSummary } from "@/lib/account";
 import { nrwHolidays } from "@/lib/holidays";
 import { vacationEntitlement, absenceWorkdays } from "@/lib/soll";
 import { dateKey } from "@/lib/shift";
+import type { AbsenceKind } from "@/lib/absence-types";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { RequestForm } from "./request-form";
 import { AdminAddAbsence } from "./admin-add-absence";
 import { AbsenceRow, type AbsenceView } from "./absence-row";
+import { VacationCalendar } from "./vacation-calendar";
 
 export const metadata: Metadata = { title: "Urlaub – Eifel Wagyu" };
 
@@ -27,7 +29,7 @@ function YearNav({ year }: { year: number }) {
 }
 
 function toView(a: {
-  id: string; userId: string; type: "VACATION" | "SICK" | "OTHER";
+  id: string; userId: string; type: AbsenceKind;
   startDate: Date; endDate: Date; halfDay: boolean;
   status: "PENDING" | "APPROVED" | "REJECTED"; note: string | null;
 }, userName?: string): AbsenceView {
@@ -53,7 +55,7 @@ export default async function UrlaubPage({ searchParams }: PageProps<"/urlaub">)
     const [summary, rows] = await Promise.all([
       getVacationSummary(session.user.id, year),
       prisma.absence.findMany({
-        where: { userId: session.user.id, startDate: { lte: yEnd }, endDate: { gte: yStart } },
+        where: { userId: session.user.id, type: "VACATION", startDate: { lte: yEnd }, endDate: { gte: yStart } },
         orderBy: { startDate: "desc" },
       }),
     ]);
@@ -75,7 +77,7 @@ export default async function UrlaubPage({ searchParams }: PageProps<"/urlaub">)
         <RequestForm />
 
         <section>
-          <h2 className="mb-2 text-lg font-semibold">Meine Abwesenheiten {year}</h2>
+          <h2 className="mb-2 text-lg font-semibold">Meine Urlaube {year}</h2>
           {rows.length === 0 ? (
             <p className="text-sm text-slate-500 dark:text-slate-400">Keine Einträge.</p>
           ) : (
@@ -106,7 +108,7 @@ export default async function UrlaubPage({ searchParams }: PageProps<"/urlaub">)
       },
     }),
     prisma.absence.findMany({
-      where: { startDate: { lte: yEnd }, endDate: { gte: yStart } },
+      where: { type: "VACATION", startDate: { lte: yEnd }, endDate: { gte: yStart } },
       orderBy: [{ status: "asc" }, { startDate: "desc" }],
       include: { user: { select: { name: true } } },
     }),
@@ -134,6 +136,18 @@ export default async function UrlaubPage({ searchParams }: PageProps<"/urlaub">)
           )}
         </Link>
       </div>
+
+      <section>
+        <h2 className="mb-2 text-lg font-semibold">Urlaubskalender {year}</h2>
+        <VacationCalendar
+          key={year}
+          year={year}
+          initialMonth={year === now.getFullYear() ? now.getMonth() : 0}
+          absences={rows.map((a) => toView(a, a.user.name))}
+          holidays={Object.fromEntries(holidays)}
+          users={userOptions}
+        />
+      </section>
 
       <section>
         <h2 className="mb-2 text-lg font-semibold">Urlaubskonten {year}</h2>
@@ -175,7 +189,7 @@ export default async function UrlaubPage({ searchParams }: PageProps<"/urlaub">)
       </section>
 
       <section>
-        <h2 className="mb-2 text-lg font-semibold">Alle Abwesenheiten {year}</h2>
+        <h2 className="mb-2 text-lg font-semibold">Alle Urlaube {year}</h2>
         {rows.length === 0 ? (
           <p className="text-sm text-slate-500 dark:text-slate-400">Keine Einträge.</p>
         ) : (

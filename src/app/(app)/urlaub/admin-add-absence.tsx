@@ -2,13 +2,19 @@
 
 import { useState } from "react";
 import { AdminAbsenceForm } from "./admin-absence-form";
+import type { AbsenceKind } from "@/lib/absence-types";
+import { VACATION_TYPES } from "@/lib/absence-view";
 
 export function AdminAddAbsence({
   users,
   presetUserId,
+  types = VACATION_TYPES,
+  label = "Urlaub eintragen",
 }: {
   users: { id: string; name: string }[];
   presetUserId?: string;
+  types?: { value: AbsenceKind; label: string }[];
+  label?: string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -18,7 +24,7 @@ export function AdminAddAbsence({
         onClick={() => setOpen(true)}
         className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium transition hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
       >
-        Abwesenheit eintragen
+        {label}
       </button>
     );
   }
@@ -27,9 +33,10 @@ export function AdminAddAbsence({
     <AdminAbsenceForm
       users={users}
       lockUser={Boolean(presetUserId)}
+      types={types}
       defaults={{
         userId: presetUserId ?? "",
-        type: "VACATION",
+        type: types[0].value,
         start: "",
         end: "",
         halfDay: false,
