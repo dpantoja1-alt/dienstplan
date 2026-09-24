@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ChevronLeftIcon, ChevronRightIcon, navArrow } from "@/components/icons";
 import Link from "next/link";
 import type { Route } from "next";
 
@@ -164,9 +165,9 @@ export default async function StundenkontoPage({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Link href={qs({ m: shiftMonth(year, month1, -1) }) as Route} className="rounded-md border border-slate-300 px-2 py-1 text-sm dark:border-slate-600">←</Link>
+          <Link href={qs({ m: shiftMonth(year, month1, -1) }) as Route} className={navArrow} aria-label="Vorheriger Monat"><ChevronLeftIcon /></Link>
           <span className="min-w-40 text-center text-sm font-medium">{monthLabel}</span>
-          <Link href={qs({ m: shiftMonth(year, month1, 1) }) as Route} className="rounded-md border border-slate-300 px-2 py-1 text-sm dark:border-slate-600">→</Link>
+          <Link href={qs({ m: shiftMonth(year, month1, 1) }) as Route} className={navArrow} aria-label="Nächster Monat"><ChevronRightIcon /></Link>
         </div>
 
         {isAdmin && (

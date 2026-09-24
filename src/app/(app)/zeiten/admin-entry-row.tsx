@@ -1,5 +1,6 @@
 "use client";
 
+import { PencilIcon, TrashIcon, iconBtn, iconBtnDanger } from "@/components/icons";
 import { useState, useTransition } from "react";
 import type { ViewEntry } from "@/lib/time-entry-view";
 import { formatMinutes } from "@/lib/worktime";
@@ -80,8 +81,8 @@ export function AdminEntryRow({
 
         {mode === "view" && (
           <div className="flex items-center gap-2">
-            <button onClick={() => setMode("edit")} className="text-sm text-slate-600 hover:underline dark:text-slate-300">
-              Bearbeiten
+            <button onClick={() => setMode("edit")} className={iconBtn} title="Bearbeiten" aria-label="Bearbeiten">
+              <PencilIcon />
             </button>
             {showConfirm && entry.status === "PENDING" && !entry.running && (
               <button
@@ -92,8 +93,8 @@ export function AdminEntryRow({
                 Bestätigen
               </button>
             )}
-            <button onClick={() => setMode("confirmDelete")} className="text-sm text-red-600 hover:underline dark:text-red-400">
-              Löschen
+            <button onClick={() => setMode("confirmDelete")} className={iconBtnDanger} title="Löschen" aria-label="Löschen">
+              <TrashIcon />
             </button>
           </div>
         )}

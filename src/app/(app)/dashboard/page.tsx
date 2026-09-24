@@ -72,17 +72,22 @@ export default async function DashboardPage() {
   const nowMonth1 = new Date().getMonth() + 1;
 
   if (isAdmin) {
-    const [openInvites, pendingReviews, pendingAbsences, todayShifts, overruns] = await Promise.all([
+    const [openInvites, pendingReviews, pendingAbsences, todayShifts, overruns, openEntry] = await Promise.all([
       prisma.user.count({ where: { passwordHash: null } }),
       prisma.timeEntry.count({ where: { status: "PENDING", end: { not: null } } }),
       prisma.absence.count({ where: { status: "PENDING" } }),
       prisma.shift.count({ where: { date: dateFromKey(todayKey) } }),
       getOverrunAlerts(),
+      prisma.timeEntry.findFirst({ where: { userId: user.id, end: null } }),
     ]);
 
     return (
       <div>
         <h1 className="text-2xl font-semibold">Hallo {firstName} 👋</h1>
+
+        <div className="mt-4">
+          <StampClock openSinceISO={openEntry?.start.toISOString() ?? null} />
+        </div>
 
         {overruns.length > 0 && (
           <Link

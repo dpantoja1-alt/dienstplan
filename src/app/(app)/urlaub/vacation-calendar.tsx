@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronLeftIcon, ChevronRightIcon, navArrow } from "@/components/icons";
 import { useState } from "react";
 import { AbsenceRow, type AbsenceView } from "./absence-row";
 
@@ -68,9 +69,9 @@ export function VacationCalendar({
             onClick={() => go(-1)}
             disabled={month === 0}
             aria-label="Vorheriger Monat"
-            className="rounded-md border border-slate-300 px-2 py-1 text-sm disabled:opacity-40 dark:border-slate-600"
+            className={`${navArrow} disabled:opacity-40`}
           >
-            ←
+            <ChevronLeftIcon />
           </button>
           <span className="min-w-36 text-center font-medium">
             {MONTHS[month]} {year}
@@ -79,9 +80,9 @@ export function VacationCalendar({
             onClick={() => go(1)}
             disabled={month === 11}
             aria-label="Nächster Monat"
-            className="rounded-md border border-slate-300 px-2 py-1 text-sm disabled:opacity-40 dark:border-slate-600"
+            className={`${navArrow} disabled:opacity-40`}
           >
-            →
+            <ChevronRightIcon />
           </button>
         </div>
         <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">

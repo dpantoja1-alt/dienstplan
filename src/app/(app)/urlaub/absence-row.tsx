@@ -1,5 +1,6 @@
 "use client";
 
+import { PencilIcon, TrashIcon, iconBtn, iconBtnDanger } from "@/components/icons";
 import { useState, useTransition } from "react";
 import type { AbsenceKind } from "@/lib/absence-types";
 import {
@@ -131,15 +132,17 @@ export function AbsenceRow({
                 </button>
               </>
             )}
-            <button onClick={() => setEditing(true)} className="text-slate-600 hover:underline dark:text-slate-300">
-              Bearbeiten
+            <button onClick={() => setEditing(true)} className={iconBtn} title="Bearbeiten" aria-label="Bearbeiten">
+              <PencilIcon />
             </button>
             <button
               disabled={busy}
               onClick={() => run(() => deleteAbsence(a.id))}
-              className="text-red-600 hover:underline dark:text-red-400"
+              className={iconBtnDanger}
+              title="Löschen"
+              aria-label="Löschen"
             >
-              Löschen
+              <TrashIcon />
             </button>
           </>
         )}

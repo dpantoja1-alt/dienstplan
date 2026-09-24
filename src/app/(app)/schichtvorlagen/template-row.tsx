@@ -1,5 +1,6 @@
 "use client";
 
+import { PencilIcon, TrashIcon, iconBtn, iconBtnDanger } from "@/components/icons";
 import { useState, useTransition } from "react";
 import { minutesToHHMM, formatShiftRange } from "@/lib/shift";
 import { deleteTemplate, toggleTemplateActive } from "./actions";
@@ -84,8 +85,8 @@ export function TemplateRow({ t }: { t: TemplateView }) {
         >
           {t.active ? "Deaktivieren" : "Aktivieren"}
         </button>
-        <button onClick={() => setMode("edit")} className="text-slate-600 hover:underline dark:text-slate-300">
-          Bearbeiten
+        <button onClick={() => setMode("edit")} className={iconBtn} title="Bearbeiten" aria-label="Bearbeiten">
+          <PencilIcon />
         </button>
         {mode === "confirmDelete" ? (
           <span className="flex items-center gap-2">
@@ -102,8 +103,8 @@ export function TemplateRow({ t }: { t: TemplateView }) {
             </button>
           </span>
         ) : (
-          <button onClick={() => setMode("confirmDelete")} className="text-red-600 hover:underline dark:text-red-400">
-            Löschen
+          <button onClick={() => setMode("confirmDelete")} className={iconBtnDanger} title="Löschen" aria-label="Löschen">
+            <TrashIcon />
           </button>
         )}
       </div>

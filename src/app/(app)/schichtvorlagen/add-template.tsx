@@ -10,7 +10,7 @@ export function AddTemplate() {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-brand-ink transition hover:bg-brand-strong"
+        className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-brand-ink transition hover:bg-brand-strong"
       >
         + Vorlage
       </button>

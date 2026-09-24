@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ChevronLeftIcon, ChevronRightIcon, navArrow } from "@/components/icons";
 import Link from "next/link";
 import type { Route } from "next";
 
@@ -40,16 +41,14 @@ export default async function AbwesenheitenPage({ searchParams }: PageProps<"/ab
       : Promise.resolve([]),
   ]);
 
-  const nav = "rounded-md border border-slate-300 px-2 py-1 text-sm dark:border-slate-600";
-
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Abwesenheiten</h1>
         <div className="flex items-center gap-2">
-          <Link href={`/abwesenheiten?j=${year - 1}` as Route} className={nav}>←</Link>
+          <Link href={`/abwesenheiten?j=${year - 1}` as Route} className={navArrow} aria-label="Vorheriges Jahr"><ChevronLeftIcon /></Link>
           <span className="min-w-16 text-center font-medium">{year}</span>
-          <Link href={`/abwesenheiten?j=${year + 1}` as Route} className={nav}>→</Link>
+          <Link href={`/abwesenheiten?j=${year + 1}` as Route} className={navArrow} aria-label="Nächstes Jahr"><ChevronRightIcon /></Link>
         </div>
       </div>
 

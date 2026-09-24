@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ChevronLeftIcon, ChevronRightIcon, navArrow } from "@/components/icons";
 import Link from "next/link";
 import type { Route } from "next";
 
@@ -185,12 +186,12 @@ export default async function PlanPage({ searchParams }: PageProps<"/plan">) {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Link href={`/plan?w=${week.prev}` as Route} className="rounded-md border border-slate-300 px-2 py-1 text-sm transition hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800">
-            ←
+          <Link href={`/plan?w=${week.prev}` as Route} className={navArrow} aria-label="Vorherige Woche">
+            <ChevronLeftIcon />
           </Link>
           <span className="min-w-44 text-center text-sm font-medium">{week.label}</span>
-          <Link href={`/plan?w=${week.next}` as Route} className="rounded-md border border-slate-300 px-2 py-1 text-sm transition hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800">
-            →
+          <Link href={`/plan?w=${week.next}` as Route} className={navArrow} aria-label="Nächste Woche">
+            <ChevronRightIcon />
           </Link>
           {week.key !== week.current && (
             <Link

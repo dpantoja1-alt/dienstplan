@@ -1,5 +1,6 @@
 "use client";
 
+import { PencilIcon, TrashIcon, iconBtn, iconBtnDanger } from "@/components/icons";
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { formatMinutes } from "@/lib/worktime";
@@ -82,11 +83,11 @@ function TodayEntryItem({ userId, entry }: { userId: string; entry: TodayEntry }
       </span>
       {!entry.running && mode === "view" && (
         <>
-          <button onClick={() => setMode("edit")} className="text-slate-500 hover:underline dark:text-slate-400">
-            Ändern
+          <button onClick={() => setMode("edit")} className={iconBtn} title="Bearbeiten" aria-label="Bearbeiten">
+            <PencilIcon className="h-3.5 w-3.5" />
           </button>
-          <button onClick={() => setMode("confirmDelete")} className="text-red-600 hover:underline dark:text-red-400">
-            Löschen
+          <button onClick={() => setMode("confirmDelete")} className={iconBtnDanger} title="Löschen" aria-label="Löschen">
+            <TrashIcon className="h-3.5 w-3.5" />
           </button>
         </>
       )}

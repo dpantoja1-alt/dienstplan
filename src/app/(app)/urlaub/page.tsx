@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ChevronLeftIcon, ChevronRightIcon, navArrow } from "@/components/icons";
 import Link from "next/link";
 import type { Route } from "next";
 
@@ -21,9 +22,9 @@ export const metadata: Metadata = { title: "Urlaub – Eifel Wagyu" };
 function YearNav({ year }: { year: number }) {
   return (
     <div className="flex items-center gap-2">
-      <Link href={`/urlaub?j=${year - 1}` as Route} className="rounded-md border border-slate-300 px-2 py-1 text-sm dark:border-slate-600">←</Link>
+      <Link href={`/urlaub?j=${year - 1}` as Route} className={navArrow} aria-label="Vorheriges Jahr"><ChevronLeftIcon /></Link>
       <span className="min-w-16 text-center font-medium">{year}</span>
-      <Link href={`/urlaub?j=${year + 1}` as Route} className="rounded-md border border-slate-300 px-2 py-1 text-sm dark:border-slate-600">→</Link>
+      <Link href={`/urlaub?j=${year + 1}` as Route} className={navArrow} aria-label="Nächstes Jahr"><ChevronRightIcon /></Link>
     </div>
   );
 }
