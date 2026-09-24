@@ -107,6 +107,9 @@ model ShiftTemplate {
   breakMinutes Int? // geplante Pause (optional)
   color        String  @default("#64748b")
   active       Boolean @default(true)
+  /// Flexibler Dienst (FX, z. B. Geschäftsführer): kein automatisches Ausstempeln
+  /// nach 11 Std., keine Überzeit-Warnung, es zählt die tatsächlich erfasste Zeit.
+  flexible     Boolean @default(false)
   sortOrder    Int     @default(0)
 
   shifts    Shift[]
@@ -132,6 +135,7 @@ model Shift {
   label        String
   color        String
   note         String?
+  flexible     Boolean @default(false) // Snapshot aus der Vorlage (FX)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

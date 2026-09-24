@@ -40,11 +40,20 @@ export function formatShiftRange(startMinutes: number, endMinutes: number): stri
 
 /** Geplante Netto-Minuten je Tag (Summe aller Schichten des Tages), z. B. für einen Monat. */
 export function plannedMinutesByDay(
-  shifts: { date: Date; startMinutes: number; endMinutes: number; breakMinutes: number | null }[],
+  shifts: {
+    date: Date;
+    startMinutes: number;
+    endMinutes: number;
+    breakMinutes: number | null;
+    flexible?: boolean;
+  }[],
 ): Map<string, number> {
   const map = new Map<string, number>();
+  // Tage mit flexiblem Dienst (FX) haben keine feste Sollzeit – dort gibt es keine Abweichungswarnung.
+  const flexibleDays = new Set(shifts.filter((s) => s.flexible).map((s) => dateKey(s.date)));
   for (const s of shifts) {
     const key = dateKey(s.date);
+    if (flexibleDays.has(key)) continue;
     const dur = shiftDurationMinutes(s.startMinutes, s.endMinutes, s.breakMinutes);
     map.set(key, (map.get(key) ?? 0) + dur);
   }

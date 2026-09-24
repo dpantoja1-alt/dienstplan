@@ -15,6 +15,7 @@ export type TemplateDefaults = {
   end: string;
   breakMinutes: string;
   color: string;
+  flexible?: boolean;
 };
 
 const COLORS = [
@@ -93,6 +94,17 @@ export function TemplateForm({
           <input type="number" name="breakMinutes" min="0" max="240" step="5" placeholder="–" defaultValue={defaults.breakMinutes} className={`${inputCls} w-24`} />
         </label>
       </div>
+
+      <label className="flex items-start gap-2 text-sm">
+        <input type="checkbox" name="flexible" defaultChecked={defaults.flexible} className="mt-0.5" />
+        <span>
+          <span className="font-medium">Flexibler Dienst</span>
+          <span className="block text-xs text-slate-500 dark:text-slate-400">
+            z. B. für die Geschäftsführung: kein automatisches Ausstempeln nach 11 Std., keine
+            Überzeit-Warnung, es zählt die tatsächlich erfasste Zeit. Von/Bis dienen nur der Planung.
+          </span>
+        </span>
+      </label>
 
       <fieldset className="flex flex-col gap-1 text-xs font-medium">
         Farbe

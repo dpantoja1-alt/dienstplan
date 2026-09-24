@@ -38,7 +38,7 @@ export default async function ZeitenPage({
     }),
     prisma.shift.findMany({
       where: { userId: session.user.id, date: { gte: month.start, lte: month.end } },
-      select: { date: true, startMinutes: true, endMinutes: true, breakMinutes: true },
+      select: { date: true, startMinutes: true, endMinutes: true, breakMinutes: true, flexible: true },
     }),
   ]);
 

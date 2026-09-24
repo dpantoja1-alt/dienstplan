@@ -37,7 +37,7 @@ export default async function MitarbeiterZeitenPage({
     }),
     prisma.shift.findMany({
       where: { userId: id, date: { gte: month.start, lte: month.end } },
-      select: { date: true, startMinutes: true, endMinutes: true, breakMinutes: true },
+      select: { date: true, startMinutes: true, endMinutes: true, breakMinutes: true, flexible: true },
     }),
   ]);
 

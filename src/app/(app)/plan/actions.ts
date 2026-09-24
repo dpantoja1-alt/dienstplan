@@ -39,6 +39,7 @@ export async function assignShiftFromTemplate(
       breakMinutes: template.breakMinutes,
       label: template.shortLabel,
       color: template.color,
+      flexible: template.flexible,
     },
   });
   revalidatePath("/plan");
@@ -195,6 +196,7 @@ export async function saveShiftAsTemplate(
       endMinutes: shift.endMinutes,
       breakMinutes: shift.breakMinutes,
       color: shift.color,
+      flexible: shift.flexible,
       sortOrder: count,
     },
   });
@@ -248,6 +250,7 @@ export async function copyPreviousWeek(mondayKey: string) {
         label: s.label,
         color: s.color,
         note: s.note,
+        flexible: s.flexible,
       };
     })
     .filter((x): x is NonNullable<typeof x> => x !== null);

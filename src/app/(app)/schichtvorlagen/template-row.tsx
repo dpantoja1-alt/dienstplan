@@ -15,6 +15,7 @@ export type TemplateView = {
   breakMinutes: number | null;
   color: string;
   active: boolean;
+  flexible: boolean;
   shiftCount: number;
 };
 
@@ -48,6 +49,7 @@ export function TemplateRow({ t }: { t: TemplateView }) {
             end: minutesToHHMM(t.endMinutes),
             breakMinutes: t.breakMinutes?.toString() ?? "",
             color: t.color,
+            flexible: t.flexible,
           }}
           onDone={() => setMode("view")}
           onCancel={() => setMode("view")}
@@ -68,8 +70,17 @@ export function TemplateRow({ t }: { t: TemplateView }) {
             <span className="rounded bg-slate-100 px-1.5 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-400">
               {t.shortLabel}
             </span>
+            {t.flexible && (
+              <span
+                className="rounded bg-amber-100 px-1.5 text-xs text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                title="Kein automatisches Ausstempeln nach 11 Std., keine Überzeit-Warnung – es zählt die tatsächlich erfasste Zeit"
+              >
+                flexibel
+              </span>
+            )}
           </div>
           <div className="text-sm text-slate-500 dark:text-slate-400">
+            {t.flexible && "Richtwert "}
             {formatShiftRange(t.startMinutes, t.endMinutes)}
             {t.breakMinutes ? ` · ${t.breakMinutes} Min Pause` : ""}
             {t.shiftCount > 0 ? ` · ${t.shiftCount}× im Plan` : ""}

@@ -43,7 +43,7 @@ export default async function ZeitenPruefenPage() {
         userId: { in: [...byUser.keys()] },
         date: { gte: new Date(Math.min(...starts)), lte: new Date(Math.max(...starts)) },
       },
-      select: { userId: true, date: true, startMinutes: true, endMinutes: true, breakMinutes: true },
+      select: { userId: true, date: true, startMinutes: true, endMinutes: true, breakMinutes: true, flexible: true },
     });
     for (const userId of byUser.keys()) {
       plannedByUser.set(

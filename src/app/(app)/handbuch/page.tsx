@@ -446,6 +446,12 @@ export default async function HandbuchPage() {
               Von der App automatisch ausgestempelte Einträge (11 Stunden) sind mit einem Korrekturhinweis
               versehen. Trage dort die tatsächliche Zeit ein.
             </li>
+            <li>
+              Ausnahme <b>Flexibler Dienst (FX)</b>: Ist an dem Tag eine Vorlage mit dem Merkmal
+              „Flexibler Dienst“ eingeplant (z. B. für die Geschäftsführung), wird nicht automatisch
+              ausgestempelt, es gibt keine Überzeit-Warnung und keine Plan-Abweichung, und es zählt
+              die tatsächlich gestempelte Zeit.
+            </li>
           </UL>
 
           {/* -------------------------------------------------- Admin: Plan */}

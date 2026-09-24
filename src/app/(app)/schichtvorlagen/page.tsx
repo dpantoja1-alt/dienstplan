@@ -43,6 +43,7 @@ export default async function SchichtvorlagenPage() {
                 breakMinutes: t.breakMinutes,
                 color: t.color,
                 active: t.active,
+                flexible: t.flexible,
                 shiftCount: t._count.shifts,
               }}
             />

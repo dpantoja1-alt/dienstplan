@@ -1,4 +1,5 @@
 import "server-only";
+import { hasFlexibleShift } from "./flexible";
 import { prisma } from "./prisma";
 import { dayKey, localInputToDate } from "./time-zone";
 import { minutesToHHMM, dateFromKey } from "./shift";
@@ -46,6 +47,9 @@ export async function getOverrunAlerts(): Promise<OverrunAlert[]> {
       openSinceISO: e.start.toISOString(),
       runningMinutes,
     };
+
+    // Flexibler Dienst (FX): keine Überzeit-Warnung, es zählt die tatsächliche Zeit.
+    if (await hasFlexibleShift(e.userId, e.start)) continue;
 
     if (startKey < todayKey) {
       alerts.push({ ...base, kind: "since_earlier", plannedEndLabel: null, overrunMinutes: null });

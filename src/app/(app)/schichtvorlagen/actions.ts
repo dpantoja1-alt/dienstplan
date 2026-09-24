@@ -21,6 +21,7 @@ const schema = z
       .trim()
       .regex(/^#[0-9a-fA-F]{6}$/, "Farbe ungültig")
       .default("#64748b"),
+    flexible: z.boolean().default(false),
   })
   .transform((v, ctx) => {
     const start = hhmmToMinutes(v.start);
@@ -53,6 +54,7 @@ const schema = z
       endMinutes: end,
       breakMinutes,
       color: v.color,
+      flexible: v.flexible,
     };
   });
 
@@ -70,6 +72,7 @@ export async function saveTemplate(
     end: formData.get("end"),
     breakMinutes: formData.get("breakMinutes") ?? undefined,
     color: formData.get("color") || "#64748b",
+    flexible: formData.get("flexible") === "on",
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Eingabe ungültig." };
