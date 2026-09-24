@@ -7,7 +7,8 @@ import { quickAddAbsence, deleteAbsence } from "@/app/(app)/urlaub/actions";
 import { ABSENCE_KINDS, ABSENCE_TYPES } from "@/lib/absence-types";
 import { absenceTypeLabel } from "@/lib/absence-view";
 import { CustomShiftForm } from "./custom-shift-form";
-import type { GridAbsence, GridShift, GridTemplate } from "./types";
+import type { GridAbsence, GridIst, GridShift, GridTemplate } from "./types";
+import { formatMinutes } from "@/lib/worktime";
 
 const ABSENCE_OPTIONS = ABSENCE_KINDS.map((type) => ({ type, label: ABSENCE_TYPES[type].label }));
 
@@ -19,6 +20,7 @@ export function CellEditor({
   shifts,
   absence,
   templates,
+  ist,
   onClose,
 }: {
   userId: string;
@@ -28,6 +30,7 @@ export function CellEditor({
   shifts: GridShift[];
   absence: GridAbsence | null;
   templates: GridTemplate[];
+  ist: GridIst | null;
   onClose: () => void;
 }) {
   const [busy, start] = useTransition();
@@ -57,6 +60,16 @@ export function CellEditor({
           Schließen
         </button>
       </div>
+
+      {ist && ist.spans.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md bg-white px-2 py-1.5 text-sm dark:bg-slate-800">
+          <span className="font-medium">Gestempelt</span>
+          <span className="tabular-nums">{ist.spans.map((s) => `${s.start}–${s.end}`).join(", ")}</span>
+          <span className="text-slate-500 dark:text-slate-400">
+            Pause {ist.breakMinutes} Min · netto {formatMinutes(ist.netMinutes)} h
+          </span>
+        </div>
+      )}
 
       {shifts.length > 0 && (
         <ul className="mt-3 flex flex-col gap-1">

@@ -108,18 +108,29 @@ export default async function PlanPage({ searchParams }: PageProps<"/plan">) {
     }),
   );
 
-  // Ist-Minuten je Mitarbeiter+Tag (nur Admin)
-  const istMap = new Map<string, number>();
+  // Ist-Zeiten je Mitarbeiter+Tag (nur Admin): Netto-Minuten, Pausen und gestempelte Spannen
+  const istMap = new Map<
+    string,
+    { net: number; breaks: number; spans: { startISO: string; start: string; end: string }[] }
+  >();
   for (const e of timeRows) {
     const k = tzDayKey(e.start);
     if (!dayKeys.has(k)) continue;
     const v = toViewEntry(e, minBreakByUser.get(e.userId) ?? 0);
-    istMap.set(`${e.userId}|${k}`, (istMap.get(`${e.userId}|${k}`) ?? 0) + (v.netMinutes ?? 0));
+    const key = `${e.userId}|${k}`;
+    const cur = istMap.get(key) ?? { net: 0, breaks: 0, spans: [] };
+    cur.net += v.netMinutes ?? 0;
+    cur.breaks += v.effectiveBreak ?? 0;
+    cur.spans.push({ startISO: v.startISO, start: v.startTime, end: v.endTime ?? "" });
+    istMap.set(key, cur);
   }
-  const gridIst: GridIst[] = [...istMap.entries()].map(([key, netMinutes]) => {
+  const gridIst: GridIst[] = [...istMap.entries()].map(([key, v]) => {
     const [userId, dayKey] = key.split("|");
-    const cost = dayCost(netMinutes, rateByUser.get(userId) ?? null);
-    return { userId, dayKey, netMinutes, cost };
+    const cost = dayCost(v.net, rateByUser.get(userId) ?? null);
+    const spans = v.spans
+      .sort((a, b) => a.startISO.localeCompare(b.startISO))
+      .map(({ start, end }) => ({ start, end }));
+    return { userId, dayKey, netMinutes: v.net, breakMinutes: v.breaks, spans, cost };
   });
 
   const dayNotes = dayNoteRows.map((n) => ({

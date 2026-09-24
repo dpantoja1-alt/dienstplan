@@ -54,6 +54,8 @@ export type GridIst = {
   userId: string;
   dayKey: string;
   netMinutes: number;
+  breakMinutes: number; // Summe der wirksamen Pausen
+  spans: { start: string; end: string }[]; // gestempelte Zeiten "HH:MM", sortiert
   cost: number | null; // null = kein Gehalt hinterlegt
 };
 

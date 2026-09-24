@@ -57,6 +57,19 @@ const cellBase = "border-t border-line p-1.5 align-top";
 const headCls = "text-[11px] font-semibold uppercase tracking-wider text-muted";
 const pill = "inline-block rounded-full px-2 py-0.5 text-xs font-medium tabular-nums whitespace-nowrap";
 const warnPill = "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300";
+/** "07:24–20:34", bei mehreren Stempelungen erster Beginn bis letztes Ende + Anzahl. */
+function istRangeLabel(i: GridIst): string {
+  if (i.spans.length === 0) return formatMinutes(i.netMinutes);
+  const first = i.spans[0].start;
+  const last = i.spans[i.spans.length - 1].end;
+  return i.spans.length > 1 ? `${first}–${last} (${i.spans.length}×)` : `${first}–${last}`;
+}
+
+function istTooltip(i: GridIst): string {
+  const spans = i.spans.map((s) => `${s.start}–${s.end}`).join(", ");
+  return `Gestempelt ${spans} · Pause ${i.breakMinutes} Min · netto ${formatMinutes(i.netMinutes)} h`;
+}
+
 const toggleCls =
   "flex cursor-pointer items-center gap-2 rounded-full border border-line bg-surface px-3 py-1 shadow-sm has-[:checked]:border-brand has-[:checked]:bg-brand/10";
 
@@ -84,6 +97,7 @@ export function PlanGrid({
   const [sel, setSel] = useState<{ userId: string; dayKey: string } | null>(null);
   const [showIst, toggleIst] = useToggle("plan.showIst");
   const [showCost, toggleCost] = useToggle("plan.showCost");
+  const [showRange, toggleRange] = useToggle("plan.showIstRange");
 
   const byCell = useMemo(() => {
     const map = new Map<string, GridShift[]>();
@@ -188,6 +202,12 @@ export function PlanGrid({
             <input type="checkbox" checked={showIst} onChange={toggleIst} className="accent-[var(--brand-strong)]" />
             Ist-Zeiten
           </label>
+          {showIst && (
+            <label className={toggleCls} title="Ist-Zeiten als Uhrzeit (von–bis) statt als Stunden anzeigen">
+              <input type="checkbox" checked={showRange} onChange={toggleRange} className="accent-[var(--brand-strong)]" />
+              Von–bis
+            </label>
+          )}
           {showCostControls && (
             <label className={toggleCls}>
               <input type="checkbox" checked={showCost} onChange={toggleCost} className="accent-[var(--brand-strong)]" />
@@ -306,7 +326,9 @@ export function PlanGrid({
                           </span>
                         )}
                         {canEdit && showIst && cellIst && cellIst.netMinutes > 0 && (
-                          <div className="text-[11px] text-muted">Ist {formatMinutes(cellIst.netMinutes)}</div>
+                          <div className="text-[11px] tabular-nums text-muted" title={istTooltip(cellIst)}>
+                            Ist {showRange ? istRangeLabel(cellIst) : formatMinutes(cellIst.netMinutes)}
+                          </div>
                         )}
                         {canEdit && showCost && cellIst && cellIst.cost != null && cellIst.cost > 0 && (
                           <div className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
@@ -417,6 +439,7 @@ export function PlanGrid({
           dayLabel={`${selDay.weekday} ${selDay.label}`}
           shifts={selShifts}
           absence={absenceByCell.get(`${sel.userId}|${sel.dayKey}`) ?? null}
+          ist={istByCell.get(`${sel.userId}|${sel.dayKey}`) ?? null}
           templates={templates}
           onClose={() => setSel(null)}
         />
