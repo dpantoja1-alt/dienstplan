@@ -18,6 +18,7 @@ import { absenceTypeColor, absenceTypeLabel } from "@/lib/absence-view";
 import { dayKey as tzDayKey } from "@/lib/time-zone";
 import { toViewEntry } from "@/lib/time-entry-view";
 import { hourlyRate, dayCost } from "@/lib/cost";
+import { getBalancesUntil } from "@/lib/account";
 import { PlanGrid } from "./plan-grid";
 import { WeekToolbar } from "./week-toolbar";
 import type { GridAbsence, GridIst, GridShift, GridTemplate } from "./types";
@@ -107,6 +108,16 @@ export default async function PlanPage({ searchParams }: PageProps<"/plan">) {
       return [u.id, Math.round(Math.max(0, weekWorkdays - absDays) * daily)];
     }),
   );
+
+  // Stundenstand bis Ende der angezeigten Woche, höchstens bis gestern (heute läuft noch).
+  // Admin sieht alle, Mitarbeiter nur sich selbst.
+  const yesterdayKey = dateKey(new Date(dateFromKey(tzDayKey(new Date())).getTime() - 86400000));
+  const saldoUntil = weekEndKey < yesterdayKey ? weekEndKey : yesterdayKey;
+  const balances = await getBalancesUntil(
+    isAdmin ? users.map((u) => u.id) : [session.user.id],
+    saldoUntil,
+  );
+  const saldoLabel = `Stand ${saldoUntil.slice(8, 10)}.${saldoUntil.slice(5, 7)}.`;
 
   // Ist-Zeiten je Mitarbeiter+Tag (nur Admin): Netto-Minuten, Pausen und gestempelte Spannen
   const istMap = new Map<
@@ -223,7 +234,10 @@ export default async function PlanPage({ searchParams }: PageProps<"/plan">) {
           isSelf: u.id === session.user.id,
           isAdmin: u.role === "ADMIN",
           sollMinutes: sollByUser.get(u.id) ?? 0,
+          // ohne erfasste Zeiten (z. B. Geschäftsführung) kein Saldo – er wäre nur "minus Soll"
+          saldoMinutes: balances.get(u.id)?.tracked ? balances.get(u.id)!.minutes : null,
         }))}
+        saldoLabel={saldoLabel}
         days={week.days.map((d) => ({
           key: d.key,
           label: d.label,

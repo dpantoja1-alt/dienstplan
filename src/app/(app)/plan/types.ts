@@ -5,6 +5,7 @@ export type GridUser = {
   isSelf: boolean;
   isAdmin: boolean;
   sollMinutes: number; // effektives Wochen-Soll (Feiertage + genehmigte Abwesenheit abgezogen)
+  saldoMinutes: number | null; // kumulierter Stundenstand bis Stichtag; null = nicht sichtbar
 };
 
 export type GridShift = {

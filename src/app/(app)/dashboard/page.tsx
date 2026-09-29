@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireUser } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
-import { monthRange } from "@/lib/time-zone";
+import { monthRange, dayKey } from "@/lib/time-zone";
 import { groupByDay } from "@/lib/time-entry-view";
 import { formatMinutes } from "@/lib/worktime";
 import { dateFromKey, formatFullDay, formatShiftRange } from "@/lib/shift";
-import { getMonthAccount, getVacationSummary } from "@/lib/account";
+import { getBalancesUntil, getVacationSummary } from "@/lib/account";
 import { getOverrunAlerts, alertText } from "@/lib/alerts";
 import { StampClock } from "@/app/(app)/zeiten/stamp-clock";
 import { format } from "date-fns";
@@ -15,15 +15,47 @@ export const metadata: Metadata = {
   title: "Übersicht – Eifel Wagyu",
 };
 
-function Card({ href, value, label }: { href: string; value: string; label: string }) {
+function Card({
+  href,
+  value,
+  label,
+  tone,
+}: {
+  href: string;
+  value: string;
+  label: string;
+  tone?: "plus" | "minus";
+}) {
   return (
     <Link
       href={href as never}
       className="rounded-xl border border-line bg-surface p-4 shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_2px_0_var(--border),0_6px_12px_rgba(33,39,33,0.07)] transition hover:-translate-y-0.5 hover:border-brand hover:shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_3px_0_var(--border),0_10px_16px_rgba(33,39,33,0.1)] active:translate-y-px"
     >
-      <div className="text-3xl font-semibold tabular-nums">{value}</div>
+      <div
+        className={`text-3xl font-semibold tabular-nums ${
+          tone === "minus" ? "text-red-600 dark:text-red-400" : tone === "plus" ? "text-emerald-700 dark:text-emerald-400" : ""
+        }`}
+      >
+        {value}
+      </div>
       <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">{label}</div>
     </Link>
+  );
+}
+
+/** Kachel mit dem kumulierten Stundenstand (Plus-/Minusstunden) bis gestern. */
+async function BalanceCard({ userId }: { userId: string }) {
+  const yesterdayKey = new Date(dateFromKey(dayKey(new Date())).getTime() - 86400000).toISOString().slice(0, 10);
+  const result = (await getBalancesUntil([userId], yesterdayKey)).get(userId);
+  if (!result?.tracked) return null; // ohne erfasste Zeiten nicht aussagekräftig
+  const balance = result.minutes;
+  return (
+    <Card
+      href="/stundenkonto"
+      value={`${balance > 0 ? "+" : ""}${formatMinutes(balance)}`}
+      label={`Stundenstand (bis ${yesterdayKey.slice(8, 10)}.${yesterdayKey.slice(5, 7)}.)`}
+      tone={balance < 0 ? "minus" : balance > 0 ? "plus" : undefined}
+    />
   );
 }
 
@@ -69,7 +101,6 @@ export default async function DashboardPage() {
   const todayKey = format(new Date(), "yyyy-MM-dd");
 
   const nowYear = new Date().getFullYear();
-  const nowMonth1 = new Date().getMonth() + 1;
 
   if (isAdmin) {
     const [openInvites, pendingReviews, pendingAbsences, todayShifts, overruns, openEntry] = await Promise.all([
@@ -111,6 +142,7 @@ export default async function DashboardPage() {
           <Card href="/zeiten/team" value={String(pendingReviews)} label="Zeiten zu prüfen" />
           <Card href="/urlaub/antraege" value={String(pendingAbsences)} label="Urlaubsanträge" />
           <Card href="/plan" value={String(todayShifts)} label="Schichten heute" />
+          <BalanceCard userId={user.id} />
           <Card
             href="/mitarbeiter"
             value={openInvites > 0 ? String(openInvites) : "→"}
@@ -125,7 +157,7 @@ export default async function DashboardPage() {
     );
   }
 
-  const [openEntry, entries, me, vacation, account] = await Promise.all([
+  const [openEntry, entries, me, vacation] = await Promise.all([
     prisma.timeEntry.findFirst({ where: { userId: user.id, end: null } }),
     prisma.timeEntry.findMany({
       where: { userId: user.id, start: { gte: month.start, lte: month.end } },
@@ -135,7 +167,6 @@ export default async function DashboardPage() {
       select: { minBreakMinutes: true },
     }),
     getVacationSummary(user.id, nowYear),
-    getMonthAccount(user.id, nowYear, nowMonth1),
   ]);
   const { totalNet } = groupByDay(entries, me?.minBreakMinutes ?? 0);
 
@@ -153,11 +184,7 @@ export default async function DashboardPage() {
           value={openEntry ? "läuft" : formatMinutes(totalNet)}
           label={openEntry ? "Zeiterfassung aktiv" : "Erfasst diesen Monat"}
         />
-        <Card
-          href="/stundenkonto"
-          value={formatMinutes(account.balanceMinutes)}
-          label="Saldo diesen Monat"
-        />
+        <BalanceCard userId={user.id} />
         <Card href="/urlaub" value={String(vacation.remaining)} label="Resturlaub (Tage)" />
         <Card href="/plan" value="→" label="Dienstplan ansehen" />
         <Card href="/handbuch" value="?" label="Handbuch" />

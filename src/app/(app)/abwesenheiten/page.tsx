@@ -8,6 +8,8 @@ import { prisma } from "@/lib/prisma";
 import { dateKey } from "@/lib/shift";
 import { OTHER_ABSENCE_TYPES } from "@/lib/absence-view";
 import { AbsenceRow } from "../urlaub/absence-row";
+import { SubTabs } from "@/app/(app)/nav-link";
+import { TEAM_TABS, URLAUB_TABS } from "@/app/(app)/tabs";
 import { AdminAddAbsence } from "../urlaub/admin-add-absence";
 
 export const metadata: Metadata = { title: "Abwesenheiten – Eifel Wagyu" };
@@ -43,6 +45,7 @@ export default async function AbwesenheitenPage({ searchParams }: PageProps<"/ab
 
   return (
     <div className="flex flex-col gap-5">
+      <SubTabs tabs={isAdmin ? TEAM_TABS : URLAUB_TABS} />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Abwesenheiten</h1>
         <div className="flex items-center gap-2">

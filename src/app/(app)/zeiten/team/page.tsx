@@ -6,6 +6,8 @@ import { prisma } from "@/lib/prisma";
 import { berlinTodayRange, dateToLocalInput } from "@/lib/time-zone";
 import { toViewEntry } from "@/lib/time-entry-view";
 import { getOverrunAlerts, alertText } from "@/lib/alerts";
+import { SubTabs } from "@/app/(app)/nav-link";
+import { TEAM_TABS } from "@/app/(app)/tabs";
 import { TeamClockRow, type TeamRow } from "./team-clock-row";
 
 export const metadata: Metadata = { title: "Team-Zeiten – Eifel Wagyu" };
@@ -72,6 +74,7 @@ export default async function TeamZeitenPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      <SubTabs tabs={TEAM_TABS} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Team-Zeiten</h1>
         <Link

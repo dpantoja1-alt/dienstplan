@@ -183,6 +183,16 @@ export default async function HandbuchPage() {
           Oben rechts findest du das Profil-Symbol (<A href="/konto">Konto</A>) zum Ändern des Passworts und
           das Symbol zum Abmelden. Auf dem Handy öffnest du das Menü über das Hamburger-Symbol.
         </li>
+        <li>
+          Das Menü hat die Punkte Übersicht, Plan, Meine Zeiten und Urlaub. Unter „Meine Zeiten“ findest du
+          oben die Unterreiter Zeiten und Stundenkonto, unter „Urlaub“ auch deine Abwesenheiten. Die Leitung
+          hat zusätzlich „Team“ (Team-Zeiten, Prüfen, Abwesenheiten) und das Zahnrad für Mitarbeiter,
+          Schichtvorlagen und dieses Handbuch.
+        </li>
+        <li>
+          Die Kachel „Stundenstand“ auf der Übersicht und die Spalte „Saldo“ im Plan zeigen deine Plus- oder
+          Minusstunden, aufsummiert seit Eintritt (frühestens Januar 2026) bis zum Vortag.
+        </li>
       </UL>
 
       {/* -------------------------------------------------------- Übersicht */}
@@ -428,7 +438,7 @@ export default async function HandbuchPage() {
           <UL>
             <li>
               <A href="/zeiten/team">Team-Zeiten</A> zeigt, wer gerade eingestempelt ist. Du kannst für jeden
-              ein- und ausstempeln und die Einträge von heute bearbeiten. Ein roter Zähler am Menüpunkt
+              ein- und ausstempeln und die Einträge von heute bearbeiten. Ein roter Zähler am Menüpunkt „Team“
               meldet Überschreitungen der geplanten Zeit, sonst zeigt ein gelber Zähler die Zahl offener
               Einträge.
             </li>

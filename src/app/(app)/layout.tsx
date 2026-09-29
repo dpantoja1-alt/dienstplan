@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { getOverrunAlerts } from "@/lib/alerts";
 import { Logo } from "@/components/logo";
-import { NavLink } from "./nav-link";
+import { NavLink, SettingsMenu } from "./nav-link";
 import { MobileNav } from "./mobile-nav";
 import { UserIcon, LogoutIcon } from "./nav-icons";
 
@@ -24,7 +24,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="relative border-b border-line bg-surface">
+      <header className="sticky top-0 z-40 border-b border-line bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/85">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-3">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
             <Link href="/dashboard" aria-label="Startseite">
@@ -33,8 +33,10 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             <MobileNav>
               <NavLink href="/dashboard">Übersicht</NavLink>
               <NavLink href="/plan">Plan</NavLink>
-              <NavLink href="/zeiten" exact>Zeiten</NavLink>
-              <NavLink href="/urlaub">
+              <NavLink href="/zeiten" also={["/stundenkonto"]} except={["/zeiten/team", "/zeiten/pruefen"]}>
+                Meine Zeiten
+              </NavLink>
+              <NavLink href="/urlaub" also={isAdmin ? [] : ["/abwesenheiten"]}>
                 Urlaub
                 {pendingAbsences > 0 && (
                   <span className="ml-1 rounded-full bg-amber-500 px-1.5 text-xs text-white">
@@ -42,13 +44,9 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
                   </span>
                 )}
               </NavLink>
-              <NavLink href="/abwesenheiten">Abwesenheiten</NavLink>
-              <NavLink href="/stundenkonto">Stundenkonto</NavLink>
-              {isAdmin && <NavLink href="/mitarbeiter">Mitarbeiter</NavLink>}
-              {isAdmin && <NavLink href="/schichtvorlagen">Vorlagen</NavLink>}
               {isAdmin && (
-                <NavLink href="/zeiten/team">
-                  Team-Zeiten
+                <NavLink href="/zeiten/team" also={["/zeiten/pruefen", "/abwesenheiten"]}>
+                  Team
                   {overrunCount > 0 ? (
                     <span className="ml-1 rounded-full bg-red-600 px-1.5 text-xs font-semibold text-white">
                       ⚠ {overrunCount}
@@ -61,6 +59,15 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
                     )
                   )}
                 </NavLink>
+              )}
+              {isAdmin && (
+                <SettingsMenu
+                  items={[
+                    { href: "/mitarbeiter", label: "Mitarbeiter" },
+                    { href: "/schichtvorlagen", label: "Schichtvorlagen" },
+                    { href: "/handbuch", label: "Handbuch" },
+                  ]}
+                />
               )}
             </MobileNav>
           </div>

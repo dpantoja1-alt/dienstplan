@@ -7,6 +7,8 @@ import { monthRange } from "@/lib/time-zone";
 import { plannedMinutesByDay, PLAN_DEVIATION_THRESHOLD_MINUTES } from "@/lib/shift";
 import { StampClock } from "./stamp-clock";
 import { MonthNav } from "./month-nav";
+import { SubTabs } from "@/app/(app)/nav-link";
+import { ZEITEN_TABS } from "@/app/(app)/tabs";
 import { OwnEntryRow } from "./own-entry-row";
 
 export const metadata: Metadata = { title: "Zeiten – Eifel Wagyu" };
@@ -47,6 +49,7 @@ export default async function ZeitenPage({
 
   return (
     <div className="flex flex-col gap-5">
+      <SubTabs tabs={ZEITEN_TABS} />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Meine Zeiten</h1>
       </div>

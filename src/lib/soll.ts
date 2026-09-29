@@ -137,6 +137,21 @@ export function monthAccount(params: {
   adjustmentMinutes?: number;
 }): MonthAccount {
   const { start, end } = monthRangeKeys(params.year, params.month1);
+  return periodAccount({ ...params, startKey: start, endKey: end });
+}
+
+/** Wie monthAccount, aber für einen beliebigen Zeitraum (z. B. Monatsanfang bis heute). */
+export function periodAccount(params: {
+  startKey: string;
+  endKey: string;
+  weeklyHours: number;
+  workDaysPerWeek: number;
+  absences: AbsenceSpan[];
+  workedMinutes: number;
+  adjustmentMinutes?: number;
+}): MonthAccount {
+  const start = params.startKey;
+  const end = params.endKey;
   const workdays = countWorkdays(start, end);
   const daily = dailySollMinutes(params.weeklyHours, params.workDaysPerWeek);
   const { credit: absenceDays, sollFree: sollFreeDays } = absenceEffectDays(params.absences, start, end);

@@ -15,6 +15,8 @@ import { de } from "date-fns/locale";
 import { RequestForm } from "./request-form";
 import { AdminAddAbsence } from "./admin-add-absence";
 import { AbsenceRow, type AbsenceView } from "./absence-row";
+import { SubTabs } from "@/app/(app)/nav-link";
+import { URLAUB_TABS } from "@/app/(app)/tabs";
 import { VacationCalendar } from "./vacation-calendar";
 
 export const metadata: Metadata = { title: "Urlaub – Eifel Wagyu" };
@@ -63,6 +65,7 @@ export default async function UrlaubPage({ searchParams }: PageProps<"/urlaub">)
 
     return (
       <div className="flex flex-col gap-5">
+        <SubTabs tabs={URLAUB_TABS} />
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Urlaub</h1>
           <YearNav year={year} />

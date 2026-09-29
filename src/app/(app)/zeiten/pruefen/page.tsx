@@ -6,6 +6,8 @@ import { toViewEntry } from "@/lib/time-entry-view";
 import { formatDay, dayKey } from "@/lib/time-zone";
 import { plannedMinutesByDay } from "@/lib/shift";
 import { AdminEntryRow } from "../admin-entry-row";
+import { SubTabs } from "@/app/(app)/nav-link";
+import { TEAM_TABS } from "@/app/(app)/tabs";
 import { ConfirmAllButton } from "../confirm-all-button";
 
 export const metadata: Metadata = { title: "Zeiten prüfen – Eifel Wagyu" };
@@ -55,6 +57,7 @@ export default async function ZeitenPruefenPage() {
 
   return (
     <div className="flex flex-col gap-5">
+      <SubTabs tabs={TEAM_TABS} />
       <h1 className="text-2xl font-semibold">Zeiten prüfen</h1>
 
       {byUser.size === 0 ? (

@@ -5,10 +5,12 @@ import type { Route } from "next";
 
 import { requireUser } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
-import { getMonthAccount, getCumulativeBalance } from "@/lib/account";
+import { getMonthAccount, getCumulativeBalance, balanceStartMonth } from "@/lib/account";
 import { formatMinutes } from "@/lib/worktime";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
+import { SubTabs } from "@/app/(app)/nav-link";
+import { ZEITEN_TABS } from "@/app/(app)/tabs";
 import { OvertimeSection, type Adjustment } from "./overtime-section";
 
 export const metadata: Metadata = { title: "Stundenkonto – Eifel Wagyu" };
@@ -44,14 +46,9 @@ async function AccountTable({
   const acc = await getMonthAccount(userId, year, month1);
 
   // Kumuliert ab Eintrittsmonat (frühestens 01/2026), sonst ab Januar des Jahres.
-  let fromY = year;
-  let fromM = 1;
-  if (employmentStart) {
-    const ey = employmentStart.getUTCFullYear();
-    const em = employmentStart.getUTCMonth() + 1;
-    if (ey < 2026 || (ey === 2026 && em < 1)) { fromY = 2026; fromM = 1; }
-    else { fromY = ey; fromM = em; }
-  }
+  const start = balanceStartMonth(employmentStart, year);
+  let fromY = start.year;
+  let fromM = start.month1;
   if (fromY > year || (fromY === year && fromM > month1)) { fromY = year; fromM = month1; }
   const cumulative = await getCumulativeBalance(userId, fromY, fromM, year, month1);
 
@@ -161,6 +158,7 @@ export default async function StundenkontoPage({
 
   return (
     <div className="flex flex-col gap-5">
+      <SubTabs tabs={ZEITEN_TABS} />
       <h1 className="text-2xl font-semibold">Stundenkonto</h1>
 
       <div className="flex flex-wrap items-center justify-between gap-3">

@@ -83,6 +83,7 @@ export function PlanGrid({
   templates,
   canEdit,
   showCostControls,
+  saldoLabel,
 }: {
   users: GridUser[];
   days: GridDay[];
@@ -93,6 +94,7 @@ export function PlanGrid({
   templates: GridTemplate[];
   canEdit: boolean;
   showCostControls: boolean;
+  saldoLabel: string; // Stichtag, z. B. "Stand 28.09."
 }) {
   const [sel, setSel] = useState<{ userId: string; dayKey: string } | null>(null);
   const [showIst, toggleIst] = useToggle("plan.showIst");
@@ -181,8 +183,9 @@ export function PlanGrid({
 
   const showIstCol = canEdit;
   const showKostenCol = canEdit && showCost;
+  const showSaldoCol = users.some((u) => u.saldoMinutes != null);
   // Anzahl der Zusammenfassungs-Spalten rechts (für Leerzellen in anderen Zeilen)
-  const rightCols = 2 + (showIstCol ? 1 : 0) + (showKostenCol ? 1 : 0);
+  const rightCols = 2 + (showIstCol ? 1 : 0) + (showSaldoCol ? 1 : 0) + (showKostenCol ? 1 : 0);
   const emptyRight = Array.from({ length: rightCols });
 
   const dayTint = (d: GridDay, strong: boolean) =>
@@ -242,6 +245,15 @@ export function PlanGrid({
               <th className={`min-w-16 border-l-2 border-line p-2 text-center ${headCls}`}>Soll</th>
               <th className={`min-w-16 border-l border-line p-2 text-center ${headCls}`}>Geplant</th>
               {showIstCol && <th className={`min-w-16 border-l border-line p-2 text-center ${headCls}`}>Ist</th>}
+              {showSaldoCol && (
+                <th
+                  className={`min-w-16 border-l border-line p-2 text-center ${headCls}`}
+                  title={`Kumulierter Stundenstand (Plus-/Minusstunden), ${saldoLabel}`}
+                >
+                  Saldo
+                  <div className="mt-0.5 text-[10px] font-normal normal-case tracking-normal">{saldoLabel}</div>
+                </th>
+              )}
               {showKostenCol && <th className={`min-w-16 border-l border-line p-2 text-center ${headCls}`}>Kosten</th>}
             </tr>
           </thead>
@@ -370,6 +382,22 @@ export function PlanGrid({
                           </span>
                         </td>
                       )}
+                      {showSaldoCol && (
+                        <td className={`${cellBase} border-l text-center align-middle`}>
+                          {u.saldoMinutes != null && (
+                            <span
+                              className={`${pill} ${
+                                u.saldoMinutes < 0
+                                  ? "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300"
+                                  : "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
+                              }`}
+                            >
+                              {u.saldoMinutes > 0 ? "+" : ""}
+                              {hm(u.saldoMinutes)}
+                            </span>
+                          )}
+                        </td>
+                      )}
                       {showKostenCol && (
                         <td className={`${cellBase} border-l text-center align-middle text-xs tabular-nums whitespace-nowrap text-muted`}>
                           {kosten > 0 ? formatEuro(kosten) : ""}
@@ -409,6 +437,7 @@ export function PlanGrid({
                   { show: true, value: hm(summary.soll), first: true },
                   { show: true, value: hm(summary.geplant), first: false },
                   { show: showIstCol, value: hm(summary.istMin), first: false },
+                  { show: showSaldoCol, value: "", first: false },
                   { show: showKostenCol, value: formatEuro(summary.kosten), first: false },
                 ]
                   .filter((c) => c.show)
