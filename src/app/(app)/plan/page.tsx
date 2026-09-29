@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import { ChevronLeftIcon, ChevronRightIcon, navArrow } from "@/components/icons";
+import { PeriodPicker } from "@/components/period-picker";
 import Link from "next/link";
-import type { Route } from "next";
 
 import { requireUser } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
@@ -207,23 +206,7 @@ export default async function PlanPage({ searchParams }: PageProps<"/plan">) {
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Link href={`/plan?w=${week.prev}` as Route} className={navArrow} aria-label="Vorherige Woche">
-            <ChevronLeftIcon />
-          </Link>
-          <span className="min-w-44 text-center text-sm font-medium">{week.label}</span>
-          <Link href={`/plan?w=${week.next}` as Route} className={navArrow} aria-label="Nächste Woche">
-            <ChevronRightIcon />
-          </Link>
-          {week.key !== week.current && (
-            <Link
-              href="/plan"
-              className="ml-1 rounded-md bg-brand px-2.5 py-1 text-sm font-medium text-brand-ink transition hover:bg-brand-strong"
-            >
-              Aktuelle Woche
-            </Link>
-          )}
-        </div>
+        <PeriodPicker mode="week" value={week.key} current={week.current} basePath="/plan" param="w" />
         {isAdmin && <WeekToolbar mondayKey={week.key} />}
       </div>
 

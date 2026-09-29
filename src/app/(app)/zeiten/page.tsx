@@ -62,7 +62,7 @@ export default async function ZeitenPage({
       </p>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <MonthNav basePath="/zeiten" label={month.key} prev={month.prev} next={month.next} />
+        <MonthNav basePath="/zeiten" month={month.key} />
         <span className="text-sm">
           Summe Monat:{" "}
           <span className="font-semibold tabular-nums">{formatMinutes(totalNet)}</span>

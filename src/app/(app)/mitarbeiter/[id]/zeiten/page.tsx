@@ -58,7 +58,7 @@ export default async function MitarbeiterZeitenPage({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <MonthNav basePath={basePath} label={month.key} prev={month.prev} next={month.next} />
+        <MonthNav basePath={basePath} month={month.key} />
         <div className="flex items-center gap-4">
           <span className="text-sm">
             Summe: <span className="font-semibold tabular-nums">{formatMinutes(totalNet)}</span>

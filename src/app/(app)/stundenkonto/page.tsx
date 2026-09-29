@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ChevronLeftIcon, ChevronRightIcon, navArrow } from "@/components/icons";
+import { PeriodPicker } from "@/components/period-picker";
 import Link from "next/link";
 import type { Route } from "next";
 
@@ -9,7 +9,6 @@ import { getMonthAccount, getCumulativeBalance, balanceStartMonth, getYearOvervi
 import { dayKey } from "@/lib/time-zone";
 import { formatMinutes } from "@/lib/worktime";
 import { format } from "date-fns";
-import { de } from "date-fns/locale";
 import { SubTabs } from "@/app/(app)/nav-link";
 import { ZEITEN_TABS } from "@/app/(app)/tabs";
 import { OvertimeSection, type Adjustment } from "./overtime-section";
@@ -23,14 +22,6 @@ function parseMonth(m: string | undefined): { year: number; month1: number; key:
   }
   const key = format(now, "yyyy-MM");
   return { year: now.getFullYear(), month1: now.getMonth() + 1, key };
-}
-
-function shiftMonth(year: number, month1: number, delta: number): string {
-  let y = year;
-  let m = month1 + delta;
-  while (m < 1) { m += 12; y -= 1; }
-  while (m > 12) { m -= 12; y += 1; }
-  return `${y}-${String(m).padStart(2, "0")}`;
 }
 
 async function AccountTable({
@@ -218,7 +209,6 @@ export default async function StundenkontoPage({
   const isAdmin = session.user.role === "ADMIN";
   const sp = await searchParams;
   const { year, month1, key } = parseMonth(typeof sp.m === "string" ? sp.m : undefined);
-  const monthLabel = format(new Date(Date.UTC(year, month1 - 1, 1)), "LLLL yyyy", { locale: de });
 
   const users = isAdmin
     ? await prisma.user.findMany({
@@ -267,11 +257,14 @@ export default async function StundenkontoPage({
       <h1 className="text-2xl font-semibold">Stundenkonto</h1>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Link href={qs({ m: shiftMonth(year, month1, -1) }) as Route} className={navArrow} aria-label="Vorheriger Monat"><ChevronLeftIcon /></Link>
-          <span className="min-w-40 text-center text-sm font-medium">{monthLabel}</span>
-          <Link href={qs({ m: shiftMonth(year, month1, 1) }) as Route} className={navArrow} aria-label="Nächster Monat"><ChevronRightIcon /></Link>
-        </div>
+        <PeriodPicker
+          mode="month"
+          value={key}
+          current={dayKey(new Date()).slice(0, 7)}
+          basePath="/stundenkonto"
+          param="m"
+          extraQuery={isAdmin && targetUserId !== session.user.id ? `u=${targetUserId}` : undefined}
+        />
 
         {isAdmin && (
           <form className="text-sm">
