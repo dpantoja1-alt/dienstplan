@@ -294,3 +294,110 @@ export async function getBalancesUntil(
   }
   return result;
 }
+
+export type YearOverviewRow = {
+  month1: number;
+  toDate: boolean; // laufender Monat, nur bis gestern gerechnet
+  soll: number;
+  worked: number;
+  credited: number;
+  adjustment: number;
+  balance: number; // Saldo Monat inkl. Korrekturen
+  cumulative: number; // laufender Saldo seit Beginn
+};
+
+/**
+ * Jahresübersicht des Stundenkontos: je Monat Soll, Ist, Gutschrift, Korrektur und
+ * laufender Saldo. Monate vor Beginn und in der Zukunft entfallen, der laufende
+ * Monat zählt bis gestern. `carry` = Saldo aus Vorjahren.
+ */
+export async function getYearOverview(
+  userId: string,
+  year: number,
+  todayKey: string,
+): Promise<{ carry: number; fromKey: string; rows: YearOverviewRow[] }> {
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { id: userId },
+    select: { weeklyHours: true, workDaysPerWeek: true, minBreakMinutes: true, employmentStart: true },
+  });
+  const s = balanceStartMonth(user.employmentStart, year);
+  const fromKey = `${s.year}-${String(s.month1).padStart(2, "0")}-01`;
+  const yesterdayKey = new Date(new Date(`${todayKey}T00:00:00.000Z`).getTime() - 86400000)
+    .toISOString()
+    .slice(0, 10);
+
+  const yStart = `${year}-01-01`;
+  const lastKey = [`${year}-12-31`, yesterdayKey].sort()[0];
+  const firstKey = [yStart, fromKey].sort()[1];
+
+  // Übertrag aus den Vorjahren
+  const carry =
+    fromKey < yStart
+      ? ((await getBalancesUntil([userId], `${year - 1}-12-31`)).get(userId)?.minutes ?? 0)
+      : 0;
+
+  const rows: YearOverviewRow[] = [];
+  if (firstKey > lastKey) return { carry, fromKey, rows };
+
+  const firstDate = new Date(`${firstKey}T00:00:00.000Z`);
+  const lastDate = new Date(`${lastKey}T00:00:00.000Z`);
+  const [absences, entries, adjustments] = await Promise.all([
+    prisma.absence.findMany({
+      where: { userId, status: "APPROVED", startDate: { lte: lastDate }, endDate: { gte: firstDate } },
+      select: { type: true, startDate: true, endDate: true, halfDay: true },
+    }),
+    prisma.timeEntry.findMany({
+      where: {
+        userId,
+        status: "CONFIRMED",
+        end: { not: null },
+        start: { gte: new Date(firstDate.getTime() - 86400000), lte: new Date(lastDate.getTime() + 2 * 86400000) },
+      },
+    }),
+    prisma.balanceAdjustment.findMany({
+      where: { userId, date: { gte: firstDate, lte: lastDate } },
+      select: { date: true, minutes: true },
+    }),
+  ]);
+  const spans = toSpans(absences);
+
+  let cumulative = carry;
+  for (let m = Number(firstKey.slice(5, 7)); m <= 12; m++) {
+    const { start, end } = monthRangeKeys(year, m);
+    if (start > lastKey) break;
+    const from = start < firstKey ? firstKey : start;
+    const to = end < lastKey ? end : lastKey;
+    const monthKey = start.slice(0, 7);
+    const { totalNet } = groupByDay(
+      entries.filter((e) => {
+        const k = dayKey(e.start);
+        return k >= from && k <= to;
+      }),
+      user.minBreakMinutes,
+    );
+    const adjustmentMinutes = adjustments
+      .filter((a) => toKey(a.date).startsWith(monthKey))
+      .reduce((sum, a) => sum + a.minutes, 0);
+    const acc = periodAccount({
+      startKey: from,
+      endKey: to,
+      weeklyHours: user.weeklyHours,
+      workDaysPerWeek: user.workDaysPerWeek,
+      absences: spans,
+      workedMinutes: totalNet,
+      adjustmentMinutes,
+    });
+    cumulative += acc.balanceWithAdjustmentsMinutes;
+    rows.push({
+      month1: m,
+      toDate: to < end,
+      soll: acc.sollMinutes,
+      worked: acc.workedMinutes,
+      credited: acc.creditedMinutes,
+      adjustment: acc.adjustmentMinutes,
+      balance: acc.balanceWithAdjustmentsMinutes,
+      cumulative,
+    });
+  }
+  return { carry, fromKey, rows };
+}

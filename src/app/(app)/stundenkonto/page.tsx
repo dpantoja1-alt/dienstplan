@@ -5,7 +5,8 @@ import type { Route } from "next";
 
 import { requireUser } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
-import { getMonthAccount, getCumulativeBalance, balanceStartMonth } from "@/lib/account";
+import { getMonthAccount, getCumulativeBalance, balanceStartMonth, getYearOverview } from "@/lib/account";
+import { dayKey } from "@/lib/time-zone";
 import { formatMinutes } from "@/lib/worktime";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -106,6 +107,110 @@ async function AccountTable({
   );
 }
 
+const MONTHS = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+
+function signed(min: number): string {
+  return `${min > 0 ? "+" : ""}${formatMinutes(min)}`;
+}
+
+function tone(min: number): string {
+  return min < 0 ? "text-red-600 dark:text-red-400" : min > 0 ? "text-emerald-700 dark:text-emerald-400" : "";
+}
+
+async function YearOverview({
+  userId,
+  year,
+  selectedMonth1,
+  linkFor,
+}: {
+  userId: string;
+  year: number;
+  selectedMonth1: number;
+  linkFor: (monthKey: string) => string;
+}) {
+  const { carry, rows } = await getYearOverview(userId, year, dayKey(new Date()));
+  if (rows.length === 0) return null;
+  const sum = rows.reduce(
+    (a, r) => ({
+      soll: a.soll + r.soll,
+      worked: a.worked + r.worked,
+      credited: a.credited + r.credited,
+      adjustment: a.adjustment + r.adjustment,
+      balance: a.balance + r.balance,
+    }),
+    { soll: 0, worked: 0, credited: 0, adjustment: 0, balance: 0 },
+  );
+  const hasAdj = rows.some((r) => r.adjustment !== 0);
+  const last = rows[rows.length - 1];
+  const th = "px-3 py-2 text-right font-medium";
+  const td = "px-3 py-1.5 text-right tabular-nums";
+
+  return (
+    <section>
+      <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-lg font-semibold">Jahresübersicht {year}</h2>
+        <span className="text-sm">
+          Stand: <span className={`font-semibold tabular-nums ${tone(last.cumulative)}`}>{signed(last.cumulative)}</span>
+        </span>
+      </div>
+      <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-900 dark:text-slate-400">
+            <tr>
+              <th className="px-3 py-2 text-left font-medium">Monat</th>
+              <th className={th}>Soll</th>
+              <th className={th}>Ist</th>
+              <th className={th} title="Bezahlte Abwesenheit (Urlaub, Krankheit …)">Gutschrift</th>
+              {hasAdj && <th className={th} title="Ausgezahlte Überstunden / Korrektur">Korrektur</th>}
+              <th className={th}>Saldo Monat</th>
+              <th className={th}>Saldo gesamt</th>
+            </tr>
+          </thead>
+          <tbody>
+            {carry !== 0 && (
+              <tr className="border-t border-slate-100 text-slate-500 dark:border-slate-800/60">
+                <td className="px-3 py-1.5" colSpan={hasAdj ? 6 : 5}>Übertrag aus {year - 1}</td>
+                <td className={`${td} ${tone(carry)}`}>{signed(carry)}</td>
+              </tr>
+            )}
+            {rows.map((r) => {
+              const key = `${year}-${String(r.month1).padStart(2, "0")}`;
+              return (
+                <tr
+                  key={r.month1}
+                  className={`border-t border-slate-100 dark:border-slate-800/60 ${r.month1 === selectedMonth1 ? "bg-brand/5" : ""}`}
+                >
+                  <td className="px-3 py-1.5">
+                    <Link href={linkFor(key) as Route} className="hover:underline">
+                      {MONTHS[r.month1 - 1]}
+                    </Link>
+                    {r.toDate && <span className="ml-1 text-xs text-slate-400">(bis gestern)</span>}
+                  </td>
+                  <td className={`${td} text-slate-500`}>{formatMinutes(r.soll)}</td>
+                  <td className={td}>{formatMinutes(r.worked)}</td>
+                  <td className={`${td} text-slate-500`}>{r.credited ? formatMinutes(r.credited) : "–"}</td>
+                  {hasAdj && <td className={td}>{r.adjustment ? signed(r.adjustment) : "–"}</td>}
+                  <td className={`${td} ${tone(r.balance)}`}>{signed(r.balance)}</td>
+                  <td className={`${td} font-semibold ${tone(r.cumulative)}`}>{signed(r.cumulative)}</td>
+                </tr>
+              );
+            })}
+            <tr className="border-t-2 border-slate-200 font-semibold dark:border-slate-700">
+              <td className="px-3 py-2">Summe</td>
+              <td className={td}>{formatMinutes(sum.soll)}</td>
+              <td className={td}>{formatMinutes(sum.worked)}</td>
+              <td className={td}>{formatMinutes(sum.credited)}</td>
+              {hasAdj && <td className={td}>{signed(sum.adjustment)}</td>}
+              <td className={`${td} ${tone(sum.balance)}`}>{signed(sum.balance)}</td>
+              <td className={`${td} ${tone(last.cumulative)}`}>{signed(last.cumulative)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
 export default async function StundenkontoPage({
   searchParams,
 }: PageProps<"/stundenkonto">) {
@@ -198,6 +303,13 @@ export default async function StundenkontoPage({
         year={year}
         month1={month1}
         employmentStart={targetUser.employmentStart}
+      />
+
+      <YearOverview
+        userId={targetUserId}
+        year={year}
+        selectedMonth1={month1}
+        linkFor={(m) => qs({ m })}
       />
 
       <div className="flex flex-wrap gap-2">
