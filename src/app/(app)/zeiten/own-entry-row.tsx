@@ -41,13 +41,13 @@ export function OwnEntryRow({
   return (
     <li className="px-3 py-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-sm">
-          <span className="font-medium tabular-nums">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm">
+          <span className="whitespace-nowrap font-medium tabular-nums">
             {entry.startTime}{entry.endTime ? `–${entry.endTime}` : " …"}
           </span>
           {entry.netMinutes != null && (
             <span
-              className={`tabular-nums ${deviates ? "font-semibold text-red-600 dark:text-red-400" : "text-slate-600 dark:text-slate-300"}`}
+              className={`whitespace-nowrap tabular-nums ${deviates ? "font-semibold text-red-600 dark:text-red-400" : "text-slate-600 dark:text-slate-300"}`}
             >
               {formatMinutes(entry.netMinutes)}
             </span>
@@ -57,9 +57,9 @@ export function OwnEntryRow({
               ⚠ weicht &gt;1 h vom Plan ab
             </span>
           )}
-          <span className="text-xs text-slate-400">Pause {breakText}</span>
+          <span className="whitespace-nowrap text-xs text-slate-400">Pause {breakText}</span>
           {entry.source === "CLOCK" && (
-            <span className="text-xs text-slate-400">· Stempeluhr</span>
+            <span className="whitespace-nowrap text-xs text-slate-400">· Stempeluhr</span>
           )}
         </div>
         <StatusBadge entry={entry} />

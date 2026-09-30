@@ -95,7 +95,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Handy: schlanke Kopfzeile, Navigation unten */}
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-side-line bg-side/95 px-4 py-2.5 backdrop-blur md:hidden">
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-side-line bg-side/95 px-4 pb-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] backdrop-blur md:hidden">
           {logo}
           <div className="flex items-center gap-1">
             <Link
@@ -109,10 +109,10 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-24 pt-6 has-[>.wide]:max-w-none md:px-8 md:pb-8 md:pt-8">
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-8 pt-6 has-[>.wide]:max-w-none md:px-8 md:pt-8">
           {children}
         </main>
-        <footer className="mb-16 border-t border-line px-4 py-3 text-center md:mb-0">
+        <footer className="mb-[calc(4.25rem+env(safe-area-inset-bottom))] border-t border-line px-4 py-3 text-center md:mb-0">
           <Link href="/datenschutz" className="text-xs text-muted hover:underline">
             Datenschutzerklärung
           </Link>

@@ -160,14 +160,14 @@ export function BottomNav({ items, more }: { items: NavItem[]; more: NavItem[] }
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
-  const cell = "relative flex flex-1 flex-col items-center gap-0.5 py-2 text-[10.5px] font-medium transition";
+  const cell = "relative flex flex-1 flex-col items-center gap-1 pb-1.5 pt-2 text-[11px] leading-none transition";
 
   return (
     <>
       {open && (
         <div className="fixed inset-0 z-40 bg-black/30 md:hidden" onClick={close}>
           <div
-            className="absolute inset-x-0 bottom-0 rounded-t-2xl border-t border-side-line bg-side p-3 pb-[calc(4.5rem+env(safe-area-inset-bottom))]"
+            className="absolute inset-x-0 bottom-0 rounded-t-2xl border-t border-side-line bg-side p-3 pb-[calc(5rem+env(safe-area-inset-bottom))]"
             onClick={(e) => e.stopPropagation()}
           >
             <nav className="flex flex-col gap-0.5">
@@ -195,7 +195,7 @@ export function BottomNav({ items, more }: { items: NavItem[]; more: NavItem[] }
       )}
       <nav
         aria-label="Hauptmenü"
-        className="fixed inset-x-0 bottom-0 z-50 flex border-t border-side-line bg-side/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+        className="fixed inset-x-0 bottom-0 z-50 flex border-t border-side-line bg-side px-1 pb-[max(env(safe-area-inset-bottom),0.375rem)] shadow-[0_-6px_20px_rgba(20,24,18,0.07)] md:hidden"
       >
         {items.map((i) => {
           const Icon = ICONS[i.icon];
@@ -205,14 +205,14 @@ export function BottomNav({ items, more }: { items: NavItem[]; more: NavItem[] }
               key={i.href}
               href={i.href}
               aria-current={on ? "page" : undefined}
-              className={`${cell} ${on ? "text-side-active-text" : "text-side-muted"}`}
+              className={`${cell} ${on ? "font-semibold text-side-active-text" : "font-medium text-side-muted"}`}
             >
-              <span className={`rounded-full px-3 py-0.5 ${on ? "bg-side-active" : ""}`}>
-                <Icon className="h-5 w-5" />
+              <span className={`grid h-8 w-14 place-items-center rounded-full transition ${on ? "bg-side-active" : ""}`}>
+                <Icon className="h-[22px] w-[22px]" />
               </span>
               {i.short ?? i.label}
               {i.badge && (
-                <span className="absolute left-1/2 top-0.5 ml-2">
+                <span className="absolute left-1/2 top-1 ml-2.5">
                   <Badge badge={i.badge} />
                 </span>
               )}
@@ -223,10 +223,10 @@ export function BottomNav({ items, more }: { items: NavItem[]; more: NavItem[] }
           type="button"
           onClick={() => setOpenAt(open ? null : pathname)}
           aria-expanded={open}
-          className={`${cell} ${open || moreActive ? "text-side-active-text" : "text-side-muted"}`}
+          className={`${cell} ${open || moreActive ? "font-semibold text-side-active-text" : "font-medium text-side-muted"}`}
         >
-          <span className={`rounded-full px-3 py-0.5 ${open || moreActive ? "bg-side-active" : ""}`}>
-            <MoreIcon className="h-5 w-5" />
+          <span className={`grid h-8 w-14 place-items-center rounded-full transition ${open || moreActive ? "bg-side-active" : ""}`}>
+            <MoreIcon className="h-[22px] w-[22px]" />
           </span>
           Mehr
         </button>

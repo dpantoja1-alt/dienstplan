@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Barlow, Barlow_Semi_Condensed, Inter, Fraunces } from "next/font/google";
 import "./globals.css";
 import { themeScript } from "@/lib/theme-script";
@@ -31,6 +31,13 @@ export const metadata: Metadata = {
     template: "%s",
   },
   description: "Dienstplan und Zeiterfassung für das Team",
+};
+
+/** viewport-fit=cover: App reicht bis unter Notch/Home-Balken, Abstände über env(safe-area-inset-*) */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

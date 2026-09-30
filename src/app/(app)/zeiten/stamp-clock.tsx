@@ -44,7 +44,7 @@ export function StampClock({ openSinceISO }: { openSinceISO: string | null }) {
                 minute: "2-digit",
               })}
             </div>
-            <div className="font-mono text-2xl tabular-nums">
+            <div className="font-mono text-2xl tabular-nums" suppressHydrationWarning>
               {hh}:{mm}:{ss}
             </div>
           </div>
