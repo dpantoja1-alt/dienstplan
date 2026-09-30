@@ -33,7 +33,7 @@ export function StampClock({ openSinceISO }: { openSinceISO: string | null }) {
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+    <div className="rounded-xl border border-line bg-surface p-4 shadow-[0_1px_2px_rgba(20,24,18,0.05)]">
       {openSinceISO ? (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>

@@ -38,10 +38,10 @@
 
 :root.dark {
   color-scheme: dark;
-  --background: #141613;
-  --surface: #1c1f1b;
-  --foreground: #ecebe4;
-  --muted: #9c9e94;
+  --background: #1b1d1a; /* weiches Anthrazit statt Schwarz */
+  --surface: #252823; /* Kacheln deutlich heller als der Grund */
+  --foreground: #efeee7;
+  --muted: #a7a99f;
 
   --brand: #cdbd5c;
   --brand-strong: #dccd72;
@@ -51,12 +51,12 @@
   --accent-ink: #1b1a10;
   --ember: #e08a56;
 
-  --border: #2d302a;
+  --border: #373b34;
 
-  --side: #0e100d;
-  --side-text: #c9c5b8;
-  --side-muted: #7f8177;
-  --side-line: #23261f;
+  --side: #131512;
+  --side-text: #cfcbbe;
+  --side-muted: #85877d;
+  --side-line: #2a2d27;
   --side-active: rgba(205, 189, 92, 0.16);
   --side-active-text: #e6d77e;
 }
@@ -71,8 +71,8 @@
   --color-slate-500: #74776e;
   --color-slate-600: #585b53;
   --color-slate-700: #3f423c;
-  --color-slate-800: #2a2d28;
-  --color-slate-900: #1d201c;
+  --color-slate-800: #30342e;
+  --color-slate-900: #20231f;
   --color-slate-950: #121411;
 }
 

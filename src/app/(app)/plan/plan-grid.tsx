@@ -194,7 +194,7 @@ export function PlanGrid({
         ? "bg-accent/15"
         : "bg-accent/10"
       : d.holiday
-        ? "bg-rose-50/70 dark:bg-rose-950/25"
+        ? "bg-rose-50/70 dark:bg-rose-950/15"
         : "";
 
   return (
