@@ -128,7 +128,7 @@ export function PeriodPicker({ mode, value, current, basePath, param, extraQuery
         title={mode === "week" ? "Woche auswählen" : "Monat auswählen"}
         className="flex min-w-44 items-center justify-center gap-2 rounded-md border border-line px-3 py-1 text-sm font-medium transition hover:border-brand"
       >
-        {sub && <span className="rounded bg-brand/10 px-1.5 text-xs font-semibold text-muted">{sub}</span>}
+        {sub && <span className="rounded bg-accent/15 px-1.5 text-xs font-semibold text-muted">{sub}</span>}
         <span className="tabular-nums">{label}</span>
         <span className="text-xs text-muted">▾</span>
       </button>
@@ -173,7 +173,7 @@ export function PeriodPicker({ mode, value, current, basePath, param, extraQuery
                     (selected
                       ? "bg-brand font-medium text-brand-ink"
                       : today
-                        ? "border border-brand text-foreground hover:bg-brand/10"
+                        ? "border border-accent text-foreground hover:bg-brand/10"
                         : "text-muted hover:bg-brand/10 hover:text-foreground")
                   }
                 >
@@ -203,7 +203,7 @@ export function PeriodPicker({ mode, value, current, basePath, param, extraQuery
                         (selected
                           ? "bg-brand font-semibold text-brand-ink"
                           : today
-                            ? "border border-brand hover:bg-brand/10"
+                            ? "border border-accent hover:bg-brand/10"
                             : "text-muted hover:bg-brand/10 hover:text-foreground")
                       }
                     >

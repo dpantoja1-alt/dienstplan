@@ -21,11 +21,11 @@ export function Logo({
       className={`inline-flex select-none items-center font-bold uppercase leading-none tracking-tight [font-family:var(--font-logo)] ${text} ${className}`}
       aria-label="Eifel Wagyu"
     >
-      <span style={{ color: "var(--brand)" }}>Eifel</span>
+      <span style={{ color: "var(--accent)" }}>Eifel</span>
       <span
         aria-hidden
         className="mx-[0.12em] inline-block w-px self-stretch"
-        style={{ backgroundColor: "var(--brand)" }}
+        style={{ backgroundColor: "var(--accent)" }}
       />
       <span style={{ color: "var(--muted)" }}>Wagyū</span>
     </span>

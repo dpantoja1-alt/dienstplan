@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Barlow, Barlow_Semi_Condensed, Inter, Fraunces } from "next/font/google";
 import "./globals.css";
+import { themeScript } from "@/lib/theme-script";
 
 const inter = Inter({
   variable: "--font-body",
@@ -36,8 +37,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="de"
+      suppressHydrationWarning
       className={`${inter.variable} ${barlow.variable} ${barlowCondensed.variable} ${fraunces.variable} h-full antialiased`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );

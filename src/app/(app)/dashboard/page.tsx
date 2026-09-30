@@ -29,7 +29,7 @@ function Card({
   return (
     <Link
       href={href as never}
-      className="rounded-xl border border-line bg-surface p-4 shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_2px_0_var(--border),0_6px_12px_rgba(33,39,33,0.07)] transition hover:-translate-y-0.5 hover:border-brand hover:shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_3px_0_var(--border),0_10px_16px_rgba(33,39,33,0.1)] active:translate-y-px"
+      className="rounded-xl border border-line bg-surface p-5 shadow-[0_1px_2px_rgba(20,24,18,0.05)] transition hover:border-accent hover:shadow-[0_4px_12px_rgba(20,24,18,0.08)]"
     >
       <div
         className={`text-3xl font-semibold tabular-nums ${

@@ -2,41 +2,78 @@
 
 /*
  * Eifel-Wagyu-Markenfarben (Styleguide TOP BEEF, Stand Feb 2026)
- *   Eifel Meadow  #B6A545  – Primärfarbe (Navigation, Buttons)
- *   Flame Ember   #D47843  – Sekundärfarbe (Akzente)
- *   Black 3 C     #212721  – Text / Basis
+ *   Eifel Meadow  #B6A545  – Akzent (aktiver Menüpunkt, Heute, Logo)
+ *   Black 3 C     #212721  – Text, Hauptknöpfe (hell)
  *   Eifel Stone   #56574F  – ruhiges Grau
- *   Eifel Linen   #D8D2C3  – helle Fläche / Hintergrund
+ *
+ * Hell (tagsüber) und Dunkel (abends). Dunkel wird über die Klasse .dark am
+ * <html> gesetzt – automatisch nach Sonnenauf-/-untergang oder per Schalter.
  */
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #faf9f5; /* sehr helles Leinen */
+  --background: #f6f7f4; /* neutral, leicht grünstichig – kein Beige */
   --surface: #ffffff;
   --foreground: #212721; /* Black 3 C */
-  --muted: #56574f; /* Eifel Stone */
+  --muted: #5f6158;
 
-  --brand: #b6a545; /* Eifel Meadow */
-  --brand-strong: #8f8235; /* dunkler für Hover / Text auf hell */
-  --brand-ink: #2c2915; /* Text auf Eifel Meadow */
-  --ember: #d47843; /* Flame Ember */
+  --brand: #212721; /* Hauptaktion: Knöpfe, Auswahl */
+  --brand-strong: #3b423b;
+  --brand-ink: #ffffff;
+  --accent: #b6a545; /* Eifel Meadow */
+  --accent-strong: #8f8235;
+  --accent-ink: #1f1c0c;
+  --ember: #d47843;
 
-  --border: #e6e1d5;
+  --border: #e7e8e4;
+
+  --side: #ffffff;
+  --side-text: #56574f;
+  --side-muted: #8d8f86;
+  --side-line: #e7e8e4;
+  --side-active: rgba(182, 165, 69, 0.16);
+  --side-active-text: #212721;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #1a1c19;
-    --surface: #232620;
-    --foreground: #ece9df;
-    --muted: #a8a99f;
+:root.dark {
+  color-scheme: dark;
+  --background: #141613;
+  --surface: #1c1f1b;
+  --foreground: #ecebe4;
+  --muted: #9c9e94;
 
-    --brand: #c7b657;
-    --brand-strong: #d8c874;
-    --brand-ink: #232620;
-    --ember: #e08a56;
+  --brand: #cdbd5c;
+  --brand-strong: #dccd72;
+  --brand-ink: #1b1a10;
+  --accent: #cdbd5c;
+  --accent-strong: #dccd72;
+  --accent-ink: #1b1a10;
+  --ember: #e08a56;
 
-    --border: #3a3d34;
-  }
+  --border: #2d302a;
+
+  --side: #0e100d;
+  --side-text: #c9c5b8;
+  --side-muted: #7f8177;
+  --side-line: #23261f;
+  --side-active: rgba(205, 189, 92, 0.16);
+  --side-active-text: #e6d77e;
+}
+
+/* Tailwind-Grau (slate) auf markennahes, leicht grünliches Neutralgrau umgestellt */
+@theme {
+  --color-slate-50: #f7f8f6;
+  --color-slate-100: #eff0ec;
+  --color-slate-200: #e3e4df;
+  --color-slate-300: #cfd1ca;
+  --color-slate-400: #a2a59c;
+  --color-slate-500: #74776e;
+  --color-slate-600: #585b53;
+  --color-slate-700: #3f423c;
+  --color-slate-800: #2a2d28;
+  --color-slate-900: #1d201c;
+  --color-slate-950: #121411;
 }
 
 @theme inline {
@@ -48,6 +85,15 @@
   --color-brand-strong: var(--brand-strong);
   --color-brand-ink: var(--brand-ink);
   --color-ember: var(--ember);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-ink: var(--accent-ink);
+  --color-side: var(--side);
+  --color-side-text: var(--side-text);
+  --color-side-muted: var(--side-muted);
+  --color-side-line: var(--side-line);
+  --color-side-active: var(--side-active);
+  --color-side-active-text: var(--side-active-text);
   --color-line: var(--border);
 
   --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
@@ -80,11 +126,9 @@ h3 {
   --btn-shadow-hover: 0 2px 4px rgba(33, 39, 33, 0.12);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --btn-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --btn-shadow-hover: 0 2px 4px rgba(0, 0, 0, 0.5);
-  }
+:root.dark {
+  --btn-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --btn-shadow-hover: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 button[class*="border-slate-300"],
@@ -158,17 +202,9 @@ button:disabled {
 :where(div, section, ul, a)[class*="rounded-lg"][class*="border-slate-200"]:not([class*="bg-slate-50"]):not([class*="bg-amber"]):not([class*="border-red"]) {
   background-color: var(--surface);
   border-color: var(--border);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.9) inset,
-    0 2px 0 var(--border),
-    0 6px 12px rgba(33, 39, 33, 0.06);
+  box-shadow: 0 1px 2px rgba(20, 24, 18, 0.05);
 }
 
-@media (prefers-color-scheme: dark) {
-  :where(div, section, ul, a)[class*="rounded-lg"][class*="border-slate-200"]:not([class*="bg-slate-50"]):not([class*="bg-amber"]):not([class*="border-red"]) {
-    box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.05) inset,
-      0 2px 0 rgba(0, 0, 0, 0.35),
-      0 6px 12px rgba(0, 0, 0, 0.25);
-  }
+.dark :where(div, section, ul, a)[class*="rounded-lg"][class*="border-slate-200"]:not([class*="bg-slate-50"]):not([class*="bg-amber"]):not([class*="border-red"]) {
+  box-shadow: none;
 }

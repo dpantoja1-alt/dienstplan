@@ -191,8 +191,8 @@ export function PlanGrid({
   const dayTint = (d: GridDay, strong: boolean) =>
     d.isToday
       ? strong
-        ? "bg-brand/15"
-        : "bg-brand/10"
+        ? "bg-accent/15"
+        : "bg-accent/10"
       : d.holiday
         ? "bg-rose-50/70 dark:bg-rose-950/25"
         : "";
@@ -230,7 +230,7 @@ export function PlanGrid({
                   <div className={headCls}>{d.weekday}</div>
                   <div
                     className={`mx-auto mt-0.5 inline-flex min-w-10 items-center justify-center rounded-full px-2 py-0.5 text-xs ${
-                      d.isToday ? "bg-brand font-semibold text-brand-ink shadow-sm" : "text-foreground"
+                      d.isToday ? "bg-accent font-semibold text-accent-ink" : "text-foreground"
                     }`}
                   >
                     {d.label}
@@ -288,7 +288,7 @@ export function PlanGrid({
                     >
                       {initials(u.name)}
                     </span>
-                    <span className={`leading-tight ${u.isSelf ? "text-brand-strong" : ""}`}>{u.name}</span>
+                    <span className={`leading-tight ${u.isSelf ? "text-accent-strong" : ""}`}>{u.name}</span>
                   </div>
                 </th>
                 {days.map((d) => {

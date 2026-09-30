@@ -180,14 +180,17 @@ export default async function HandbuchPage() {
           Versuchen</b> ist die Anmeldung für <b>15 Minuten</b> gesperrt.
         </li>
         <li>
-          Oben rechts findest du das Profil-Symbol (<A href="/konto">Konto</A>) zum Ändern des Passworts und
-          das Symbol zum Abmelden. Auf dem Handy öffnest du das Menü über das Hamburger-Symbol.
+          Das Menü steht links (auf dem Handy als Leiste unten): Übersicht, Plan, Meine Zeiten und Urlaub.
+          Unter „Meine Zeiten“ findest du die Unterreiter Zeiten und Stundenkonto, unter „Urlaub“ auch deine
+          Abwesenheiten. Die Leitung hat zusätzlich den Bereich „Leitung“ mit Team, Mitarbeiter und Schichtvorlagen.
         </li>
         <li>
-          Das Menü hat die Punkte Übersicht, Plan, Meine Zeiten und Urlaub. Unter „Meine Zeiten“ findest du
-          oben die Unterreiter Zeiten und Stundenkonto, unter „Urlaub“ auch deine Abwesenheiten. Die Leitung
-          hat zusätzlich „Team“ (Team-Zeiten, Prüfen, Abwesenheiten) und das Zahnrad für Mitarbeiter,
-          Schichtvorlagen und dieses Handbuch.
+          Unten im Menü stehen das Handbuch, dein Name (<A href="/konto">Konto</A>, zum Ändern des Passworts) und
+          Abmelden. Auf dem Handy findest du diese Punkte unter „Mehr“.
+        </li>
+        <li>
+          Mit dem Schalter <b>Auto / Hell / Dunkel</b> wählst du die Darstellung. „Auto“ ist tagsüber hell und
+          nach Sonnenuntergang dunkel. Die Einstellung gilt für das jeweilige Gerät.
         </li>
         <li>
           Die Kachel „Stundenstand“ auf der Übersicht und die Spalte „Saldo“ im Plan zeigen deine Plus- oder
