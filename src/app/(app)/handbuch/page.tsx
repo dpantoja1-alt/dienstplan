@@ -505,7 +505,10 @@ export default async function HandbuchPage() {
               Anträge.
             </li>
             <li>„Urlaub eintragen“ legt einen Urlaub direkt an. Er gilt sofort als genehmigt.</li>
-            <li>Die Tabelle „Urlaubskonten“ zeigt Anspruch, genommen und Rest je Mitarbeiter.</li>
+            <li>
+              Die Tabelle „Urlaubskonten“ zeigt Anspruch, genommen und Rest je Mitarbeiter. Ein Klick auf den
+              Namen öffnet darunter alle Urlaube dieser Person im Jahr – dort kannst du sie bearbeiten oder löschen.
+            </li>
           </UL>
           <H3>Abwesenheiten</H3>
           <UL>

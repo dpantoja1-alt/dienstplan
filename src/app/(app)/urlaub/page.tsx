@@ -21,12 +21,12 @@ import { VacationCalendar } from "./vacation-calendar";
 
 export const metadata: Metadata = { title: "Urlaub – Eifel Wagyu" };
 
-function YearNav({ year }: { year: number }) {
+function YearNav({ year, person }: { year: number; person?: string }) {
   return (
     <div className="flex items-center gap-2">
-      <Link href={`/urlaub?j=${year - 1}` as Route} className={navArrow} aria-label="Vorheriges Jahr"><ChevronLeftIcon /></Link>
+      <Link href={`/urlaub?j=${year - 1}${person ? `&m=${person}` : ""}` as Route} className={navArrow} aria-label="Vorheriges Jahr"><ChevronLeftIcon /></Link>
       <span className="min-w-16 text-center font-medium">{year}</span>
-      <Link href={`/urlaub?j=${year + 1}` as Route} className={navArrow} aria-label="Nächstes Jahr"><ChevronRightIcon /></Link>
+      <Link href={`/urlaub?j=${year + 1}${person ? `&m=${person}` : ""}` as Route} className={navArrow} aria-label="Nächstes Jahr"><ChevronRightIcon /></Link>
     </div>
   );
 }
@@ -120,12 +120,15 @@ export default async function UrlaubPage({ searchParams }: PageProps<"/urlaub">)
   ]);
 
   const userOptions = users.map((u) => ({ id: u.id, name: u.name }));
+  // Liste „Urlaube von …“ nur für die in den Urlaubskonten angeklickte Person
+  const selected = typeof sp.m === "string" ? users.find((u) => u.id === sp.m) : undefined;
+  const selectedRows = selected ? rows.filter((a) => a.userId === selected.id) : [];
 
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Urlaub</h1>
-        <YearNav year={year} />
+        <YearNav year={year} person={selected?.id} />
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -179,8 +182,19 @@ export default async function UrlaubPage({ searchParams }: PageProps<"/urlaub">)
                   `${year}-12-31`,
                 );
                 return (
-                  <tr key={u.id} className="border-t border-slate-100 dark:border-slate-800/60">
-                    <td className="py-1.5 pr-4">{u.name}</td>
+                  <tr
+                    key={u.id}
+                    className={`border-t border-slate-100 dark:border-slate-800/60 ${selected?.id === u.id ? "bg-slate-100 dark:bg-slate-800/60" : ""}`}
+                  >
+                    <td className="py-1.5 pr-4">
+                      <Link
+                        href={(selected?.id === u.id ? `/urlaub?j=${year}` : `/urlaub?j=${year}&m=${u.id}#urlaube-person`) as Route}
+                        scroll={false}
+                        className="font-medium underline decoration-slate-300 underline-offset-2 hover:decoration-current dark:decoration-slate-600"
+                      >
+                        {u.name}
+                      </Link>
+                    </td>
                     <td className="py-1.5 pr-4 text-right tabular-nums">{entitlement}</td>
                     <td className="py-1.5 pr-4 text-right tabular-nums">{taken}</td>
                     <td className="py-1.5 text-right font-medium tabular-nums">{entitlement - taken}</td>
@@ -190,20 +204,32 @@ export default async function UrlaubPage({ searchParams }: PageProps<"/urlaub">)
             </tbody>
           </table>
         </div>
+        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          Auf einen Namen tippen, um alle Urlaube dieser Person zu sehen und zu bearbeiten.
+        </p>
       </section>
 
-      <section>
-        <h2 className="mb-2 text-lg font-semibold">Alle Urlaube {year}</h2>
-        {rows.length === 0 ? (
-          <p className="text-sm text-slate-500 dark:text-slate-400">Keine Einträge.</p>
-        ) : (
-          <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
-            {rows.map((a) => (
-              <AbsenceRow key={a.id} a={toView(a, a.user.name)} mode="admin" users={userOptions} />
-            ))}
-          </ul>
-        )}
-      </section>
+      {selected && (
+        <section id="urlaube-person" className="scroll-mt-4">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold">
+              Urlaube {selected.name} {year}
+            </h2>
+            <Link href={`/urlaub?j=${year}` as Route} scroll={false} className="text-sm text-slate-500 underline dark:text-slate-400">
+              Schließen
+            </Link>
+          </div>
+          {selectedRows.length === 0 ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400">Keine Einträge.</p>
+          ) : (
+            <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
+              {selectedRows.map((a) => (
+                <AbsenceRow key={a.id} a={toView(a, a.user.name)} mode="admin" users={userOptions} />
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
       <HolidayList year={year} holidays={holidays} />
     </div>
