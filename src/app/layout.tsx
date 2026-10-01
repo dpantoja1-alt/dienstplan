@@ -31,6 +31,7 @@ export const metadata: Metadata = {
     template: "%s",
   },
   description: "Dienstplan und Zeiterfassung für das Team",
+  appleWebApp: { capable: true, title: "Dienstplan", statusBarStyle: "default" },
 };
 
 /** viewport-fit=cover: App reicht bis unter Notch/Home-Balken, Abstände über env(safe-area-inset-*) */
@@ -38,6 +39,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  themeColor: "#212721",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
