@@ -10,6 +10,9 @@ import { EmployeeForm } from "../employee-form";
 import { InvitePanel } from "./invite-panel";
 import { ActiveToggle } from "./active-toggle";
 import { DeleteEmployee } from "./delete-employee";
+import { WorkSchedulePanel, type WorkScheduleRow } from "./work-schedule-panel";
+import { BASE_PERIOD_KEY } from "@/lib/work-schedule";
+import { dayKey } from "@/lib/time-zone";
 
 export const metadata: Metadata = {
   title: "Mitarbeiter bearbeiten – Eifel Wagyu",
@@ -30,11 +33,25 @@ export default async function MitarbeiterDetailPage({
   const user = await prisma.user.findUnique({ where: { id } });
   if (!user) notFound();
 
-  const [teCount, shCount, abCount] = await Promise.all([
+  const [teCount, shCount, abCount, schedules] = await Promise.all([
     prisma.timeEntry.count({ where: { userId: id } }),
     prisma.shift.count({ where: { userId: id } }),
     prisma.absence.count({ where: { userId: id } }),
+    prisma.workSchedule.findMany({ where: { userId: id }, orderBy: { validFrom: "asc" } }),
   ]);
+
+  const todayKey = dayKey(new Date());
+  const scheduleRows: WorkScheduleRow[] = schedules.map((s) => ({
+    id: s.id,
+    fromKey: s.validFrom.toISOString().slice(0, 10),
+    weeklyHours: s.weeklyHours,
+    workDaysPerWeek: s.workDaysPerWeek,
+    note: s.note,
+    isBase: s.validFrom.toISOString().startsWith(BASE_PERIOD_KEY),
+    isCurrent: false,
+  }));
+  const current = scheduleRows.filter((r) => r.fromKey <= todayKey).at(-1);
+  if (current) current.isCurrent = true;
 
   const isSelf = session.user.id === user.id;
   const isPending = !user.passwordHash;
@@ -69,6 +86,12 @@ export default async function MitarbeiterDetailPage({
           >
             Datenschutz-Kenntnisnahme drucken
           </Link>
+          <Link
+            href={`/protokoll?m=${user.id}`}
+            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm transition hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
+          >
+            Änderungsprotokoll
+          </Link>
         </div>
       </div>
 
@@ -94,6 +117,7 @@ export default async function MitarbeiterDetailPage({
       <EmployeeForm
         action={updateEmployee.bind(null, user.id)}
         submitLabel="Speichern"
+        hoursLocked
         defaults={{
           name: user.name,
           email: user.email,
@@ -105,6 +129,13 @@ export default async function MitarbeiterDetailPage({
           employmentStart: toDateInput(user.employmentStart),
           monthlySalary: user.monthlySalary?.toString() ?? "",
         }}
+      />
+
+      <WorkSchedulePanel
+        userId={user.id}
+        rows={scheduleRows}
+        current={{ weeklyHours: user.weeklyHours, workDaysPerWeek: user.workDaysPerWeek }}
+        todayKey={todayKey}
       />
 
       {!isSelf && (

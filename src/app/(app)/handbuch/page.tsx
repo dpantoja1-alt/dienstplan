@@ -21,6 +21,7 @@ const SECTIONS: Section[] = [
   { id: "admin-plan", title: "Plan erstellen", adminOnly: true },
   { id: "admin-urlaub", title: "Urlaub und Abwesenheiten verwalten", adminOnly: true },
   { id: "admin-auswertung", title: "Auswertungen und Export", adminOnly: true },
+  { id: "admin-protokoll", title: "Änderungsprotokoll", adminOnly: true },
   { id: "recht", title: "Gesetzliche Grundlagen" },
   { id: "faq", title: "Häufige Fragen" },
   { id: "datenschutz", title: "Datenschutz" },
@@ -304,6 +305,15 @@ export default async function HandbuchPage() {
           Im Eintrittsjahr anteilig, 1/12 pro Monat ab dem Eintrittsmonat. Ab einem halben Tag wird
           aufgerundet (§ 5 BUrlG).
         </li>
+        <li>
+          Nicht genommener Urlaub wird ins nächste Jahr <b>übertragen</b> und dort als „Übertrag“ angezeigt.
+          Genommener Urlaub verbraucht zuerst den Übertrag.
+        </li>
+        <li>
+          Hat die Leitung für den Übertrag ein <b>Verfallsdatum</b> festgelegt, siehst du auf der Übersicht
+          und unter Urlaub einen Hinweis, wie viele Tage bis wann noch zu nehmen sind. Ab Oktober erinnert
+          die App außerdem an noch nicht verplanten Urlaub des laufenden Jahres.
+        </li>
       </UL>
 
       {/* --------------------------------------------------- Abwesenheiten */}
@@ -417,7 +427,10 @@ export default async function HandbuchPage() {
               und bearbeitest sie.
             </li>
             <li>
-              <b>Wochenstunden</b> und <b>Arbeitstage pro Woche</b> bestimmen das Tagessoll.{" "}
+              <b>Wochenstunden</b> und <b>Arbeitstage pro Woche</b> bestimmen das Tagessoll. Beim Bearbeiten
+              änderst du sie unten unter <b>Arbeitszeit</b> mit einem Gültigkeitsdatum, z. B. beim Wechsel in
+              Teilzeit. Frühere Monate im Stundenkonto bleiben dann unverändert. Für eine Korrektur von Anfang
+              an wählst du das Eintrittsdatum.{" "}
               <b>Urlaubstage pro Jahr</b> ist der volle Jahresanspruch. <b>Mindestpause</b> setzt eine Pause,
               die immer gilt. <b>Eintrittsdatum</b> steuert den anteiligen Urlaub im ersten Jahr und den
               Beginn des Stundenkontos. <b>Monatsgehalt brutto</b> ist nur für dich sichtbar und speist die
@@ -506,8 +519,17 @@ export default async function HandbuchPage() {
             </li>
             <li>„Urlaub eintragen“ legt einen Urlaub direkt an. Er gilt sofort als genehmigt.</li>
             <li>
-              Die Tabelle „Urlaubskonten“ zeigt Anspruch, genommen und Rest je Mitarbeiter. Ein Klick auf den
-              Namen öffnet darunter alle Urlaube dieser Person im Jahr – dort kannst du sie bearbeiten oder löschen.
+              Die Tabelle „Urlaubskonten“ zeigt Anspruch, Übertrag, genommen und Rest je Mitarbeiter. Ein Klick
+              auf den Namen öffnet darunter alle Urlaube dieser Person im Jahr – dort kannst du sie bearbeiten
+              oder löschen.
+            </li>
+            <li>
+              <b>Resturlaub-Übertrag:</b> Der Rest des Vorjahres wird automatisch übertragen. Unter dem
+              Namen kannst du den Übertrag abweichend festlegen (z. B. für 2026, weil die App vorher keine
+              Daten hat) und ein <b>Verfallsdatum</b> setzen, z. B. den 31.03. Was bis dahin nicht genommen
+              ist, verfällt danach. Ohne Datum verfällt nichts. Urlaub verfällt rechtlich nur, wenn der
+              Mitarbeiter rechtzeitig auf Resturlaub und Verfall hingewiesen wurde; die App zeigt ihm
+              diesen Hinweis automatisch.
             </li>
           </UL>
           <H3>Abwesenheiten</H3>
@@ -546,6 +568,26 @@ export default async function HandbuchPage() {
               <b>Überstunden auszahlen:</b> Im Stundenkonto eines Mitarbeiters trägst du eine Auszahlung mit
               Stunden, Stichtag und Notiz ein. Sie wird vom Saldo abgezogen und in Nachweis und CSV
               ausgewiesen.
+            </li>
+          </UL>
+
+          {/* --------------------------------------------- Admin: Protokoll */}
+          <H2 id="admin-protokoll">Änderungsprotokoll</H2>
+          <UL>
+            <li>
+              Unter <A href="/protokoll">Protokoll</A> steht, wer wann Zeiten, Abwesenheiten, Urlaubsanträge,
+              Stundenkonto-Buchungen, Arbeitszeiten, Resturlaub oder Stammdaten geändert hat – mit altem und
+              neuem Wert unter „Details“. Auch das automatische Ausstempeln nach 11 Std. steht dort.
+            </li>
+            <li>
+              Über das Auswahlfeld oder „Änderungsprotokoll“ beim Mitarbeiter siehst du nur die Einträge
+              einer Person.
+            </li>
+            <li>
+              Einträge lassen sich nicht ändern oder löschen und bleiben auch erhalten, wenn ein Mitarbeiter
+              gelöscht wird. Gehaltsbeträge werden nicht protokolliert, nur dass sich das Gehalt geändert hat.
+              Das normale Ein- und Ausstempeln der Mitarbeiter selbst wird nicht protokolliert, es steht
+              ohnehin in der Zeiterfassung.
             </li>
           </UL>
         </>

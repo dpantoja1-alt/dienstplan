@@ -8,8 +8,7 @@ import { weekInfo, dateFromKey, dateKey, formatShiftRange, shiftDurationMinutes 
 import { nrwHolidayName } from "@/lib/holidays";
 import {
   isWorkday,
-  countWorkdays,
-  dailySollMinutes,
+  dailySollAt,
   absenceWorkdays,
   type AbsenceSpan,
 } from "@/lib/soll";
@@ -18,6 +17,7 @@ import { dayKey as tzDayKey } from "@/lib/time-zone";
 import { toViewEntry } from "@/lib/time-entry-view";
 import { hourlyRate, dayCost } from "@/lib/cost";
 import { getBalancesUntil } from "@/lib/account";
+import { getWorkPeriods } from "@/lib/work-schedule";
 import { PlanGrid } from "./plan-grid";
 import { WeekToolbar } from "./week-toolbar";
 import type { GridAbsence, GridIst, GridShift, GridTemplate } from "./types";
@@ -85,10 +85,8 @@ export default async function PlanPage({ searchParams }: PageProps<"/plan">) {
   const minBreakByUser = new Map(users.map((u) => [u.id, u.minBreakMinutes]));
 
   // Effektives Wochen-Soll je Mitarbeiter: Arbeitstage der Woche (ohne Feiertage)
-  // minus genehmigte Abwesenheitstage, mal Tagessoll.
-  const weekStartKey = week.days[0].key;
+  // minus genehmigte Abwesenheitstage, mal Tagessoll des jeweiligen Tages.
   const weekEndKey = week.days[6].key;
-  const weekWorkdays = countWorkdays(weekStartKey, weekEndKey);
   const spansByUser = new Map<string, AbsenceSpan[]>();
   for (const a of absenceRows) {
     const arr = spansByUser.get(a.userId) ?? [];
@@ -100,11 +98,17 @@ export default async function PlanPage({ searchParams }: PageProps<"/plan">) {
     });
     spansByUser.set(a.userId, arr);
   }
+  const periodsByUser = await getWorkPeriods(users.map((u) => u.id));
   const sollByUser = new Map(
     users.map((u) => {
-      const daily = dailySollMinutes(u.weeklyHours, u.workDaysPerWeek);
-      const absDays = absenceWorkdays(spansByUser.get(u.id) ?? [], weekStartKey, weekEndKey);
-      return [u.id, Math.round(Math.max(0, weekWorkdays - absDays) * daily)];
+      const spans = spansByUser.get(u.id) ?? [];
+      let soll = 0;
+      for (const d of week.days) {
+        if (!isWorkday(d.key)) continue;
+        const free = 1 - absenceWorkdays(spans, d.key, d.key);
+        soll += free * dailySollAt(d.key, periodsByUser.get(u.id), u);
+      }
+      return [u.id, Math.round(soll)];
     }),
   );
 

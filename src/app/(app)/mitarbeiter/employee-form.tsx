@@ -63,10 +63,13 @@ export function EmployeeForm({
   action,
   defaults,
   submitLabel,
+  hoursLocked = false,
 }: {
   action: (state: EmployeeFormState, formData: FormData) => Promise<EmployeeFormState>;
   defaults: EmployeeDefaults;
   submitLabel: string;
+  /** Beim Bearbeiten: Stunden nur anzeigen, Änderung über den Arbeitszeit-Verlauf. */
+  hoursLocked?: boolean;
 }) {
   const [state, formAction] = useActionState(action, empty);
   const fe = state.fieldErrors ?? {};
@@ -95,7 +98,12 @@ export function EmployeeForm({
       </Field>
 
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Wochenstunden" name="weeklyHours" error={fe.weeklyHours}>
+        <Field
+          label="Wochenstunden"
+          name="weeklyHours"
+          error={fe.weeklyHours}
+          hint={hoursLocked ? "Heute gültig – ändern unten unter „Arbeitszeit“" : undefined}
+        >
           <input
             name="weeklyHours"
             type="number"
@@ -104,7 +112,8 @@ export function EmployeeForm({
             max="80"
             defaultValue={defaults.weeklyHours}
             required
-            className={inputCls}
+            readOnly={hoursLocked}
+            className={`${inputCls} ${hoursLocked ? "cursor-not-allowed opacity-60" : ""}`}
           />
         </Field>
         <Field label="Arbeitstage / Woche" name="workDaysPerWeek" error={fe.workDaysPerWeek}>
@@ -115,7 +124,8 @@ export function EmployeeForm({
             max="7"
             defaultValue={defaults.workDaysPerWeek}
             required
-            className={inputCls}
+            readOnly={hoursLocked}
+            className={`${inputCls} ${hoursLocked ? "cursor-not-allowed opacity-60" : ""}`}
           />
         </Field>
       </div>

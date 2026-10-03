@@ -99,6 +99,14 @@ export function BookIcon(p: IconProps) {
   );
 }
 
+export function HistoryIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12a8.25 8.25 0 1 0 2.42-5.83M3.75 4.5v3.75H7.5M12 7.5V12l3 2" />
+    </Svg>
+  );
+}
+
 export function MoreIcon(p: IconProps) {
   return (
     <Svg {...p}>

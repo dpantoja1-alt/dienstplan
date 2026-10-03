@@ -83,15 +83,15 @@ export function absenceWorkdays(
 }
 
 /**
- * Wirkung der Abwesenheiten auf das Stundenkonto, in Arbeitstagen:
- * credit = Tage mit Gutschrift, sollFree = Tage, an denen die Sollzeit entfällt.
- * Halbe Tage zählen 0,5; bei Überschneidung gewinnt "Soll entfällt".
+ * Wirkung der Abwesenheiten je Arbeitstag: credit = Anteil mit Gutschrift,
+ * free = Anteil, an dem die Sollzeit entfällt (jeweils 1 oder 0,5).
+ * Bei Überschneidung gewinnt "Soll entfällt" – credit ist bereits gekürzt.
  */
-export function absenceEffectDays(
+function absenceEffectByDay(
   absences: AbsenceSpan[],
   rangeStartKey: string,
   rangeEndKey: string,
-): { credit: number; sollFree: number } {
+): { credit: Map<string, number>; free: Map<string, number> } {
   const credit = new Map<string, number>();
   const free = new Map<string, number>();
   for (const a of absences) {
@@ -107,16 +107,64 @@ export function absenceEffectDays(
       target.set(k, Math.max(target.get(k) ?? 0, a.halfDay && single ? 0.5 : 1));
     }
   }
+  for (const [k, c] of credit) credit.set(k, Math.min(c, 1 - (free.get(k) ?? 0)));
+  return { credit, free };
+}
+
+/**
+ * Wirkung der Abwesenheiten auf das Stundenkonto, in Arbeitstagen:
+ * credit = Tage mit Gutschrift, sollFree = Tage, an denen die Sollzeit entfällt.
+ * Halbe Tage zählen 0,5; bei Überschneidung gewinnt "Soll entfällt".
+ */
+export function absenceEffectDays(
+  absences: AbsenceSpan[],
+  rangeStartKey: string,
+  rangeEndKey: string,
+): { credit: number; sollFree: number } {
+  const { credit, free } = absenceEffectByDay(absences, rangeStartKey, rangeEndKey);
   let creditSum = 0;
   let freeSum = 0;
   for (const f of free.values()) freeSum += f;
-  for (const [k, c] of credit) creditSum += Math.min(c, 1 - (free.get(k) ?? 0));
+  for (const c of credit.values()) creditSum += c;
   return { credit: creditSum, sollFree: freeSum };
+}
+
+/* ------------------------------------------------------ Arbeitszeit-Verlauf */
+
+export type WorkTime = { weeklyHours: number; workDaysPerWeek: number };
+
+/** Ab `fromKey` (yyyy-MM-dd) gelten diese Wochenstunden / Arbeitstage. */
+export type WorkPeriod = WorkTime & { fromKey: string };
+
+/**
+ * Arbeitszeit an einem Tag: die letzte Periode, die an oder vor dem Tag beginnt.
+ * Ohne passende Periode gilt `fallback` (die Stammdaten des Mitarbeiters).
+ */
+export function workTimeAt(
+  dateKey: string,
+  periods: WorkPeriod[] | undefined,
+  fallback: WorkTime,
+): WorkTime {
+  let hit: WorkPeriod | undefined;
+  for (const p of periods ?? []) {
+    if (p.fromKey <= dateKey && (!hit || p.fromKey > hit.fromKey)) hit = p;
+  }
+  return hit ?? fallback;
+}
+
+/** Tagessoll in Minuten an einem Tag, unter Berücksichtigung des Verlaufs. */
+export function dailySollAt(
+  dateKey: string,
+  periods: WorkPeriod[] | undefined,
+  fallback: WorkTime,
+): number {
+  const w = workTimeAt(dateKey, periods, fallback);
+  return dailySollMinutes(w.weeklyHours, w.workDaysPerWeek);
 }
 
 export type MonthAccount = {
   workdays: number;
-  dailySollMinutes: number;
+  dailySollMinutes: number; // Tagessoll am letzten Tag des Zeitraums
   sollMinutes: number; // Soll nach Abzug der Tage, an denen die Sollzeit entfällt (unbezahlt, Elternzeit …)
   sollFreeDays: number; // Arbeitstage ohne Sollzeit (unbezahlte Abwesenheit)
   absenceDays: number; // bezahlte Abwesenheit mit Gutschrift (Urlaub, Krank, Sonderurlaub …)
@@ -132,6 +180,7 @@ export function monthAccount(params: {
   month1: number;
   weeklyHours: number;
   workDaysPerWeek: number;
+  periods?: WorkPeriod[];
   absences: AbsenceSpan[];
   workedMinutes: number;
   adjustmentMinutes?: number;
@@ -146,17 +195,35 @@ export function periodAccount(params: {
   endKey: string;
   weeklyHours: number;
   workDaysPerWeek: number;
+  /** Arbeitszeit-Verlauf; ohne Angabe gelten weeklyHours/workDaysPerWeek durchgehend. */
+  periods?: WorkPeriod[];
   absences: AbsenceSpan[];
   workedMinutes: number;
   adjustmentMinutes?: number;
 }): MonthAccount {
   const start = params.startKey;
   const end = params.endKey;
-  const workdays = countWorkdays(start, end);
-  const daily = dailySollMinutes(params.weeklyHours, params.workDaysPerWeek);
-  const { credit: absenceDays, sollFree: sollFreeDays } = absenceEffectDays(params.absences, start, end);
-  const sollMinutes = Math.round((workdays - sollFreeDays) * daily);
-  const creditedMinutes = Math.round(absenceDays * daily);
+  const fallback = { weeklyHours: params.weeklyHours, workDaysPerWeek: params.workDaysPerWeek };
+  const { credit, free } = absenceEffectByDay(params.absences, start, end);
+  let workdays = 0;
+  let absenceDays = 0;
+  let sollFreeDays = 0;
+  let soll = 0;
+  let credited = 0;
+  for (const k of iterateDayKeys(start, end)) {
+    if (!isWorkday(k)) continue;
+    const day = dailySollAt(k, params.periods, fallback);
+    const f = free.get(k) ?? 0;
+    const c = credit.get(k) ?? 0;
+    workdays += 1;
+    sollFreeDays += f;
+    absenceDays += c;
+    soll += (1 - f) * day;
+    credited += c * day;
+  }
+  const daily = dailySollAt(end, params.periods, fallback);
+  const sollMinutes = Math.round(soll);
+  const creditedMinutes = Math.round(credited);
   const adjustmentMinutes = params.adjustmentMinutes ?? 0;
   const balanceMinutes = params.workedMinutes + creditedMinutes - sollMinutes;
   return {
@@ -194,6 +261,60 @@ export function vacationEntitlement(
   const raw = (vacationDaysPerYear * monthsWorked) / 12;
   const floor = Math.floor(raw);
   return raw - floor >= 0.5 ? floor + 1 : floor;
+}
+
+/** Übertrag aus dem Vorjahr; expiresKey = letzter Tag, an dem er genommen werden kann. */
+export type VacationCarry = { days: number; expiresKey: string | null };
+
+export type VacationBalance = {
+  entitlement: number;
+  carry: number; // Übertrag aus dem Vorjahr (negativ = im Vorjahr überzogen)
+  carryExpiresKey: string | null;
+  carryOpen: number; // Übertrag, der bis zum Verfall noch genommen werden muss
+  carryExpired: number; // bereits verfallener Übertrag
+  taken: number;
+  pending: number;
+  remaining: number; // entitlement + carry − carryExpired − taken
+};
+
+/**
+ * Urlaubskonto eines Jahres. Genommener Urlaub verbraucht zuerst den Übertrag;
+ * was davon bis zum Verfallstag nicht genommen wurde, verfällt danach.
+ */
+export function vacationBalance(params: {
+  year: number;
+  entitlement: number;
+  carry: VacationCarry | null;
+  taken: AbsenceSpan[]; // genehmigter Urlaub
+  pending: AbsenceSpan[]; // beantragter Urlaub
+  todayKey: string;
+}): VacationBalance {
+  const yStart = `${params.year}-01-01`;
+  const yEnd = `${params.year}-12-31`;
+  const taken = absenceWorkdays(params.taken, yStart, yEnd, "VACATION");
+  const pending = absenceWorkdays(params.pending, yStart, yEnd, "VACATION");
+  const carry = params.carry?.days ?? 0;
+  const expiresKey = carry > 0 ? (params.carry?.expiresKey ?? null) : null;
+
+  let carryOpen = 0;
+  let carryExpired = 0;
+  if (expiresKey) {
+    const before = absenceWorkdays(params.taken, yStart, expiresKey < yEnd ? expiresKey : yEnd, "VACATION");
+    const unused = Math.max(0, carry - before);
+    if (params.todayKey > expiresKey) carryExpired = unused;
+    else carryOpen = unused;
+  }
+
+  return {
+    entitlement: params.entitlement,
+    carry,
+    carryExpiresKey: expiresKey,
+    carryOpen,
+    carryExpired,
+    taken,
+    pending,
+    remaining: params.entitlement + carry - carryExpired - taken,
+  };
 }
 
 /** Urlaubstage einer Abwesenheit im gegebenen Jahr (halbe Tage 0,5). */

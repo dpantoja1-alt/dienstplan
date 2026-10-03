@@ -71,6 +71,8 @@ model User {
   shifts             Shift[]
   absences           Absence[]
   balanceAdjustments BalanceAdjustment[]
+  workSchedules      WorkSchedule[]
+  vacationCarryovers VacationCarryover[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -185,4 +187,56 @@ model BalanceAdjustment {
   createdAt DateTime @default(now())
 
   @@index([userId, date])
+}
+
+/// Arbeitszeit-Verlauf: ab validFrom gelten diese Wochenstunden / Arbeitstage.
+/// Ohne Einträge gelten weeklyHours/workDaysPerWeek am User durchgehend; die
+/// Felder am User spiegeln immer den heute gültigen Stand.
+model WorkSchedule {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  validFrom       DateTime @db.Date
+  weeklyHours     Float
+  workDaysPerWeek Int
+  note            String?
+  createdAt       DateTime @default(now())
+
+  @@unique([userId, validFrom])
+}
+
+/// Resturlaub-Übertrag ins Jahr `year`. Ohne Eintrag rechnet die App den Rest des
+/// Vorjahres automatisch; ein Eintrag legt Tage (days) und/oder Verfall fest.
+model VacationCarryover {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  year      Int
+  days      Float? // null = automatisch aus dem Vorjahr
+  expiresOn DateTime? @db.Date // letzter Tag, an dem der Übertrag genommen werden kann
+  note      String?
+  updatedAt DateTime  @updatedAt
+
+  @@unique([userId, year])
+}
+
+/// Änderungsprotokoll für Zeiten, Abwesenheiten, Stundenkonto und Stammdaten.
+/// Bewusst ohne Fremdschlüssel, damit Einträge auch nach Löschungen erhalten bleiben.
+model AuditLog {
+  id            String   @id @default(cuid())
+  at            DateTime @default(now())
+  actorId       String? // null = System (z. B. automatisches Ausstempeln)
+  actorName     String
+  action        String // z. B. "timeEntry.update"
+  subjectUserId String? // betroffener Mitarbeiter
+  subjectName   String?
+  entityId      String?
+  summary       String // lesbare Beschreibung
+  before        Json?
+  after         Json?
+
+  @@index([at])
+  @@index([subjectUserId, at])
 }

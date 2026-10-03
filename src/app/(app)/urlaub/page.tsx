@@ -5,10 +5,12 @@ import type { Route } from "next";
 
 import { requireUser } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
-import { getVacationSummary } from "@/lib/account";
+import { getAutoVacationCarry, getVacationSummary, type VacationSummary } from "@/lib/account";
 import { nrwHolidays } from "@/lib/holidays";
-import { vacationEntitlement, absenceWorkdays } from "@/lib/soll";
 import { dateKey } from "@/lib/shift";
+import { dayKey } from "@/lib/time-zone";
+import { VacationNotice } from "@/components/vacation-notice";
+import { CarryForm } from "./carry-form";
 import type { AbsenceKind } from "@/lib/absence-types";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -53,6 +55,7 @@ export default async function UrlaubPage({ searchParams }: PageProps<"/urlaub">)
   const yStart = new Date(`${year}-01-01T00:00:00.000Z`);
   const yEnd = new Date(`${year}-12-31T00:00:00.000Z`);
   const holidays = [...nrwHolidays(year).entries()].sort();
+  const todayKey = dayKey(now);
 
   if (!isAdmin) {
     const [summary, rows] = await Promise.all([
@@ -71,12 +74,15 @@ export default async function UrlaubPage({ searchParams }: PageProps<"/urlaub">)
           <YearNav year={year} />
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-4">
+        <div className={`grid gap-3 ${summary.carry !== 0 ? "grid-cols-2 sm:grid-cols-5" : "sm:grid-cols-4"}`}>
           <Stat label="Anspruch" value={summary.entitlement} />
+          {summary.carry !== 0 && <Stat label={`Übertrag ${year - 1}`} value={summary.carry - summary.carryExpired} />}
           <Stat label="Genommen" value={summary.taken} />
           <Stat label="Beantragt" value={summary.pending} />
           <Stat label="Rest" value={summary.remaining} highlight />
         </div>
+
+        <VacationNotice summary={summary} year={year} todayKey={todayKey} />
 
         <RequestForm />
 
@@ -103,13 +109,7 @@ export default async function UrlaubPage({ searchParams }: PageProps<"/urlaub">)
     prisma.user.findMany({
       where: { active: true },
       orderBy: [{ role: "asc" }, { name: "asc" }],
-      select: {
-        id: true, name: true, vacationDaysPerYear: true, employmentStart: true,
-        absences: {
-          where: { type: "VACATION", status: "APPROVED", startDate: { lte: yEnd }, endDate: { gte: yStart } },
-          select: { startDate: true, endDate: true, halfDay: true },
-        },
-      },
+      select: { id: true, name: true, employmentStart: true },
     }),
     prisma.absence.findMany({
       where: { type: "VACATION", startDate: { lte: yEnd }, endDate: { gte: yStart } },
@@ -123,6 +123,20 @@ export default async function UrlaubPage({ searchParams }: PageProps<"/urlaub">)
   // Liste „Urlaube von …“ nur für die in den Urlaubskonten angeklickte Person
   const selected = typeof sp.m === "string" ? users.find((u) => u.id === sp.m) : undefined;
   const selectedRows = selected ? rows.filter((a) => a.userId === selected.id) : [];
+
+  const summaries = new Map<string, VacationSummary>(
+    await Promise.all(
+      users.map(async (u) => [u.id, await getVacationSummary(u.id, year, todayKey)] as const),
+    ),
+  );
+  const [carryRow, autoCarry] = selected
+    ? await Promise.all([
+        prisma.vacationCarryover.findUnique({
+          where: { userId_year: { userId: selected.id, year } },
+        }),
+        getAutoVacationCarry(selected.id, year, selected.employmentStart, todayKey),
+      ])
+    : [null, null];
 
   return (
     <div className="flex flex-col gap-5">
@@ -164,23 +178,14 @@ export default async function UrlaubPage({ searchParams }: PageProps<"/urlaub">)
               <tr className="text-left text-slate-500 dark:text-slate-400">
                 <th className="py-1 pr-4">Mitarbeiter</th>
                 <th className="py-1 pr-4 text-right">Anspruch</th>
+                <th className="py-1 pr-4 text-right">Übertrag</th>
                 <th className="py-1 pr-4 text-right">Genommen</th>
                 <th className="py-1 text-right">Rest</th>
               </tr>
             </thead>
             <tbody>
               {users.map((u) => {
-                const entitlement = vacationEntitlement(u.vacationDaysPerYear, u.employmentStart, year);
-                const taken = absenceWorkdays(
-                  u.absences.map((a) => ({
-                    type: "VACATION" as const,
-                    startKey: dateKey(a.startDate),
-                    endKey: dateKey(a.endDate),
-                    halfDay: a.halfDay,
-                  })),
-                  `${year}-01-01`,
-                  `${year}-12-31`,
-                );
+                const s = summaries.get(u.id)!;
                 return (
                   <tr
                     key={u.id}
@@ -195,9 +200,23 @@ export default async function UrlaubPage({ searchParams }: PageProps<"/urlaub">)
                         {u.name}
                       </Link>
                     </td>
-                    <td className="py-1.5 pr-4 text-right tabular-nums">{entitlement}</td>
-                    <td className="py-1.5 pr-4 text-right tabular-nums">{taken}</td>
-                    <td className="py-1.5 text-right font-medium tabular-nums">{entitlement - taken}</td>
+                    <td className="py-1.5 pr-4 text-right tabular-nums">{s.entitlement}</td>
+                    <td className="py-1.5 pr-4 text-right tabular-nums">
+                      {s.carry === 0 ? "–" : s.carry - s.carryExpired}
+                      {s.carryOpen > 0 && s.carryExpiresKey && (
+                        <span
+                          className="block text-xs text-amber-700 dark:text-amber-400"
+                          title="Noch nicht genommener Übertrag mit Verfallsdatum"
+                        >
+                          {s.carryOpen} offen bis {s.carryExpiresKey.slice(8, 10)}.{s.carryExpiresKey.slice(5, 7)}.
+                        </span>
+                      )}
+                      {s.carryExpired > 0 && (
+                        <span className="block text-xs text-slate-500 dark:text-slate-400">{s.carryExpired} verfallen</span>
+                      )}
+                    </td>
+                    <td className="py-1.5 pr-4 text-right tabular-nums">{s.taken}</td>
+                    <td className="py-1.5 text-right font-medium tabular-nums">{s.remaining}</td>
                   </tr>
                 );
               })}
@@ -205,7 +224,8 @@ export default async function UrlaubPage({ searchParams }: PageProps<"/urlaub">)
           </table>
         </div>
         <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-          Auf einen Namen tippen, um alle Urlaube dieser Person zu sehen und zu bearbeiten.
+          Auf einen Namen tippen, um alle Urlaube dieser Person zu sehen und zu bearbeiten oder den
+          Übertrag aus dem Vorjahr festzulegen.
         </p>
       </section>
 
@@ -228,6 +248,17 @@ export default async function UrlaubPage({ searchParams }: PageProps<"/urlaub">)
               ))}
             </ul>
           )}
+          <div className="mt-4">
+            <CarryForm
+              key={`${selected.id}-${year}`}
+              userId={selected.id}
+              year={year}
+              autoDays={autoCarry}
+              days={carryRow?.days ?? null}
+              expiresKey={carryRow?.expiresOn ? dateKey(carryRow.expiresOn) : null}
+              note={carryRow?.note ?? null}
+            />
+          </div>
         </section>
       )}
 

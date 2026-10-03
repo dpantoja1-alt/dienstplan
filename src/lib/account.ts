@@ -8,10 +8,13 @@ import {
   periodAccount,
   monthRangeKeys,
   vacationEntitlement,
-  absenceWorkdays,
-  type AbsenceSpan,
+  vacationBalance,
   type MonthAccount,
+  type VacationBalance,
+  type VacationCarry,
+  type AbsenceSpan,
 } from "./soll";
+import { getWorkPeriods } from "./work-schedule";
 
 function toKey(d: Date): string {
   return d.toISOString().slice(0, 10);
@@ -47,7 +50,7 @@ export async function getMonthAccount(
   const { start, end } = monthRangeKeys(year, month1);
   const tzMonth = monthRange(`${year}-${String(month1).padStart(2, "0")}`);
 
-  const [absences, entries, adjustments] = await Promise.all([
+  const [absences, entries, adjustments, periods] = await Promise.all([
     prisma.absence.findMany({
       where: {
         userId,
@@ -75,6 +78,7 @@ export async function getMonthAccount(
       },
       select: { minutes: true },
     }),
+    getWorkPeriods([userId]),
   ]);
 
   const { totalNet } = groupByDay(entries, user.minBreakMinutes);
@@ -85,6 +89,7 @@ export async function getMonthAccount(
     month1,
     weeklyHours: user.weeklyHours,
     workDaysPerWeek: user.workDaysPerWeek,
+    periods: periods.get(userId),
     absences: toSpans(absences),
     workedMinutes: totalNet,
     adjustmentMinutes,
@@ -114,16 +119,49 @@ export async function getCumulativeBalance(
   return sum;
 }
 
-export type VacationSummary = {
-  entitlement: number;
-  taken: number; // genehmigt
-  pending: number; // beantragt, noch offen
-  remaining: number;
+/** Erstes Jahr mit Daten in der App – davor gibt es keinen automatischen Übertrag. */
+export const FIRST_VACATION_YEAR = 2026;
+
+export type VacationSummary = VacationBalance & {
+  carryAuto: boolean; // Übertrag automatisch aus dem Vorjahr berechnet (nicht vom Admin gesetzt)
 };
+
+/** Übertrag ins Jahr `year`: vom Admin festgelegt oder der Rest des Vorjahres. */
+async function vacationCarry(
+  userId: string,
+  year: number,
+  employmentStart: Date | null,
+  todayKey: string,
+): Promise<VacationCarry & { auto: boolean }> {
+  const row = await prisma.vacationCarryover.findUnique({
+    where: { userId_year: { userId, year } },
+    select: { days: true, expiresOn: true },
+  });
+  const expiresKey = row?.expiresOn ? toKey(row.expiresOn) : null;
+  if (row?.days != null) return { days: row.days, expiresKey, auto: false };
+  const auto = await getAutoVacationCarry(userId, year, employmentStart, todayKey);
+  return { days: auto ?? 0, expiresKey, auto: true };
+}
+
+/**
+ * Automatischer Übertrag ins Jahr `year` = Rest des Vorjahres.
+ * null, wenn es kein Vorjahr mit Daten gibt (vor 2026 bzw. Eintrittsjahr).
+ */
+export async function getAutoVacationCarry(
+  userId: string,
+  year: number,
+  employmentStart: Date | null,
+  todayKey: string = dayKey(new Date()),
+): Promise<number | null> {
+  const startYear = employmentStart?.getUTCFullYear() ?? FIRST_VACATION_YEAR;
+  if (year <= FIRST_VACATION_YEAR || year <= startYear) return null;
+  return (await getVacationSummary(userId, year - 1, todayKey)).remaining;
+}
 
 export async function getVacationSummary(
   userId: string,
   year: number,
+  todayKey: string = dayKey(new Date()),
 ): Promise<VacationSummary> {
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: userId },
@@ -133,47 +171,32 @@ export async function getVacationSummary(
   const yStart = new Date(`${year}-01-01T00:00:00.000Z`);
   const yEnd = new Date(`${year}-12-31T00:00:00.000Z`);
 
-  const absences = await prisma.absence.findMany({
-    where: {
-      userId,
-      type: "VACATION",
-      status: { in: ["APPROVED", "PENDING"] },
-      startDate: { lte: yEnd },
-      endDate: { gte: yStart },
-    },
-    select: { status: true, startDate: true, endDate: true, halfDay: true, type: true },
-  });
+  const [absences, carry] = await Promise.all([
+    prisma.absence.findMany({
+      where: {
+        userId,
+        type: "VACATION",
+        status: { in: ["APPROVED", "PENDING"] },
+        startDate: { lte: yEnd },
+        endDate: { gte: yStart },
+      },
+      select: { status: true, startDate: true, endDate: true, halfDay: true, type: true },
+    }),
+    vacationCarry(userId, year, user.employmentStart, todayKey),
+  ]);
 
-  const spanOf = (a: (typeof absences)[number]): AbsenceSpan => ({
-    type: "VACATION",
-    startKey: toKey(a.startDate),
-    endKey: toKey(a.endDate),
-    halfDay: a.halfDay,
-  });
+  const spans = (status: "APPROVED" | "PENDING") =>
+    toSpans(absences.filter((a) => a.status === status));
 
-  const taken = absenceWorkdays(
-    absences.filter((a) => a.status === "APPROVED").map(spanOf),
-    `${year}-01-01`,
-    `${year}-12-31`,
-  );
-  const pending = absenceWorkdays(
-    absences.filter((a) => a.status === "PENDING").map(spanOf),
-    `${year}-01-01`,
-    `${year}-12-31`,
-  );
-
-  const entitlement = vacationEntitlement(
-    user.vacationDaysPerYear,
-    user.employmentStart,
+  const balance = vacationBalance({
     year,
-  );
-
-  return {
-    entitlement,
-    taken,
-    pending,
-    remaining: entitlement - taken,
-  };
+    entitlement: vacationEntitlement(user.vacationDaysPerYear, user.employmentStart, year),
+    carry,
+    taken: spans("APPROVED"),
+    pending: spans("PENDING"),
+    todayKey,
+  });
+  return { ...balance, carryAuto: carry.auto };
 }
 
 /**
@@ -226,7 +249,7 @@ export async function getBalancesUntil(
   const earliestDate = new Date(`${earliest}T00:00:00.000Z`);
   const untilDate = new Date(`${untilKey}T00:00:00.000Z`);
 
-  const [absences, entries, adjustments] = await Promise.all([
+  const [absences, entries, adjustments, periods] = await Promise.all([
     prisma.absence.findMany({
       where: { userId: { in: userIds }, status: "APPROVED", startDate: { lte: untilDate }, endDate: { gte: earliestDate } },
       select: { userId: true, type: true, startDate: true, endDate: true, halfDay: true },
@@ -244,6 +267,7 @@ export async function getBalancesUntil(
       where: { userId: { in: userIds }, date: { gte: earliestDate, lte: untilDate } },
       select: { userId: true, date: true, minutes: true },
     }),
+    getWorkPeriods(userIds),
   ]);
 
   for (const u of users) {
@@ -279,6 +303,7 @@ export async function getBalancesUntil(
         endKey: last,
         weeklyHours: u.weeklyHours,
         workDaysPerWeek: u.workDaysPerWeek,
+        periods: periods.get(u.id),
         absences: spans,
         workedMinutes: totalNet,
         adjustmentMinutes,
@@ -341,7 +366,7 @@ export async function getYearOverview(
 
   const firstDate = new Date(`${firstKey}T00:00:00.000Z`);
   const lastDate = new Date(`${lastKey}T00:00:00.000Z`);
-  const [absences, entries, adjustments] = await Promise.all([
+  const [absences, entries, adjustments, periods] = await Promise.all([
     prisma.absence.findMany({
       where: { userId, status: "APPROVED", startDate: { lte: lastDate }, endDate: { gte: firstDate } },
       select: { type: true, startDate: true, endDate: true, halfDay: true },
@@ -358,6 +383,7 @@ export async function getYearOverview(
       where: { userId, date: { gte: firstDate, lte: lastDate } },
       select: { date: true, minutes: true },
     }),
+    getWorkPeriods([userId]),
   ]);
   const spans = toSpans(absences);
 
@@ -383,6 +409,7 @@ export async function getYearOverview(
       endKey: to,
       weeklyHours: user.weeklyHours,
       workDaysPerWeek: user.workDaysPerWeek,
+      periods: periods.get(userId),
       absences: spans,
       workedMinutes: totalNet,
       adjustmentMinutes,

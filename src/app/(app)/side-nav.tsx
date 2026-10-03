@@ -14,12 +14,13 @@ import {
   IdCardIcon,
   TemplateIcon,
   BookIcon,
+  HistoryIcon,
   MoreIcon,
   UserIcon,
 } from "./nav-icons";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-type IconKey = "home" | "plan" | "zeiten" | "urlaub" | "team" | "mitarbeiter" | "vorlagen" | "handbuch" | "konto";
+type IconKey = "home" | "plan" | "zeiten" | "urlaub" | "team" | "mitarbeiter" | "vorlagen" | "protokoll" | "handbuch" | "konto";
 
 export type NavItem = {
   href: Route;
@@ -40,6 +41,7 @@ const ICONS: Record<IconKey, (p: { className?: string }) => React.ReactNode> = {
   team: TeamIcon,
   mitarbeiter: IdCardIcon,
   vorlagen: TemplateIcon,
+  protokoll: HistoryIcon,
   handbuch: BookIcon,
   konto: UserIcon,
 };

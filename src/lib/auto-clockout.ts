@@ -1,6 +1,8 @@
 import "server-only";
 import { hasFlexibleShift } from "./flexible";
 import { prisma } from "./prisma";
+import { audit } from "./audit";
+import { timeEntryText } from "./audit-format";
 
 /**
  * Gesetzliche Höchstgrenze für eine ununterbrochene Anwesenheit:
@@ -36,17 +38,25 @@ export async function autoCloseOverrunEntries(): Promise<number> {
   }
   if (toClose.length === 0) return 0;
 
-  await prisma.$transaction(
-    toClose.map((e) =>
-      prisma.timeEntry.update({
-        where: { id: e.id },
-        data: {
-          end: new Date(e.start.getTime() + MAX_GROSS_MINUTES * 60_000),
-          status: "PENDING",
-          correctionNote: AUTO_CLOSE_NOTE,
-        },
-      }),
-    ),
-  );
-  return toClose.length;
+  let count = 0;
+  for (const e of toClose) {
+    const end = new Date(e.start.getTime() + MAX_GROSS_MINUTES * 60_000);
+    // "end: null" im Filter: läuft die Prüfung parallel in zwei Requests,
+    // schließt und protokolliert nur einer den Eintrag.
+    const { count: n } = await prisma.timeEntry.updateMany({
+      where: { id: e.id, end: null },
+      data: { end, status: "PENDING", correctionNote: AUTO_CLOSE_NOTE },
+    });
+    if (n === 0) continue;
+    count += 1;
+    await audit({
+      actor: null,
+      action: "timeEntry.autoClockOut",
+      subjectUserId: e.userId,
+      entityId: e.id,
+      summary: `Automatisch ausgestempelt nach 11 Std.: ${timeEntryText({ start: e.start.toISOString(), end: end.toISOString() })}`,
+      after: { end: end.toISOString(), status: "PENDING" },
+    });
+  }
+  return count;
 }

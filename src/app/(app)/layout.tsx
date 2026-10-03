@@ -52,6 +52,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   };
   const mitarbeiter: NavItem = { href: "/mitarbeiter", label: "Mitarbeiter", icon: "mitarbeiter" };
   const vorlagen: NavItem = { href: "/schichtvorlagen", label: "Schichtvorlagen", icon: "vorlagen" };
+  const protokoll: NavItem = { href: "/protokoll", label: "Protokoll", icon: "protokoll" };
   const handbuch: NavItem = { href: "/handbuch", label: "Handbuch", icon: "handbuch" };
   const konto: NavItem = { href: "/konto", label: "Konto", icon: "konto" };
 
@@ -85,7 +86,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
     <div className="flex min-h-dvh">
       <SideNav
         main={[home, plan, zeiten, urlaub]}
-        admin={isAdmin ? [team, mitarbeiter, vorlagen] : []}
+        admin={isAdmin ? [team, mitarbeiter, vorlagen, protokoll] : []}
         footer={[handbuch]}
         logo={logo}
         userName={name ?? ""}
@@ -121,7 +122,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
 
       <BottomNav
         items={isAdmin ? [home, plan, zeiten, urlaub, team] : [home, plan, zeiten, urlaub]}
-        more={isAdmin ? [mitarbeiter, vorlagen, handbuch, konto] : [handbuch, konto]}
+        more={isAdmin ? [mitarbeiter, vorlagen, protokoll, handbuch, konto] : [handbuch, konto]}
       />
     </div>
   );

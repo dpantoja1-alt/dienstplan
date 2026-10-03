@@ -9,6 +9,7 @@ import { dateFromKey, formatFullDay, formatShiftRange } from "@/lib/shift";
 import { getBalancesUntil, getVacationSummary } from "@/lib/account";
 import { getOverrunAlerts, alertText } from "@/lib/alerts";
 import { StampClock } from "@/app/(app)/zeiten/stamp-clock";
+import { VacationNotice } from "@/components/vacation-notice";
 import { format } from "date-fns";
 
 export const metadata: Metadata = {
@@ -176,6 +177,10 @@ export default async function DashboardPage() {
 
       <div className="mt-4">
         <StampClock openSinceISO={openEntry?.start.toISOString() ?? null} />
+      </div>
+
+      <div className="mt-4 empty:hidden">
+        <VacationNotice summary={vacation} year={nowYear} todayKey={dayKey(new Date())} showLink />
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

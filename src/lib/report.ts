@@ -9,12 +9,14 @@ import { monthRange, dayKey as tzDayKey } from "./time-zone";
 import { toViewEntry } from "./time-entry-view";
 import { nrwHolidayName } from "./holidays";
 import {
-  dailySollMinutes,
+  dailySollAt,
   isWorkday,
   iterateDayKeys,
   monthRangeKeys,
+  workTimeAt,
 } from "./soll";
 import { getCumulativeBalance } from "./account";
+import { getWorkPeriods } from "./work-schedule";
 import { formatShiftRange, minutesToHHMM } from "./shift";
 
 export type ReportDay = {
@@ -72,7 +74,7 @@ export async function getMonthReport(
   const startDate = new Date(`${startKey}T00:00:00.000Z`);
   const endDate = new Date(`${endKey}T00:00:00.000Z`);
 
-  const [entries, shifts, absences, pendingCount, adjustments] = await Promise.all([
+  const [entries, shifts, absences, pendingCount, adjustments, periodMap] = await Promise.all([
     prisma.timeEntry.findMany({
       where: {
         userId,
@@ -102,11 +104,13 @@ export async function getMonthReport(
       where: { userId, date: { gte: startDate, lte: endDate } },
       select: { minutes: true },
     }),
+    getWorkPeriods([userId]),
   ]);
 
   const adjustmentMinutes = adjustments.reduce((s, a) => s + a.minutes, 0);
 
-  const daily = dailySollMinutes(user.weeklyHours, user.workDaysPerWeek);
+  const periods = periodMap.get(userId);
+  const workTime = workTimeAt(endKey, periods, user); // Stand am Monatsende (für den Kopf)
 
   // Zeiteinträge nach Berliner Tag
   const workedByDay = new Map<string, ReportDay["worked"]>();
@@ -151,6 +155,7 @@ export async function getMonthReport(
     const absence = absenceByDay.get(k) ?? null;
     const factor = absence ? (absence.halfDay ? 0.5 : 1) : 0;
     const effect = absence ? ABSENCE_TYPES[absence.type].effect : "none";
+    const daily = dailySollAt(k, periods, user);
     const soll = workday ? Math.round((effect === "sollFree" ? 1 - factor : 1) * daily) : 0;
     const credited = workday && effect === "credit" ? Math.round(factor * daily) : 0;
     return {
@@ -195,8 +200,8 @@ export async function getMonthReport(
       id: user.id,
       name: user.name,
       email: user.email,
-      weeklyHours: user.weeklyHours,
-      workDaysPerWeek: user.workDaysPerWeek,
+      weeklyHours: workTime.weeklyHours,
+      workDaysPerWeek: workTime.workDaysPerWeek,
     },
     year,
     month1,

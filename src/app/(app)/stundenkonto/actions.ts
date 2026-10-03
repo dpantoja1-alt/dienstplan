@@ -6,6 +6,9 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { dateFromKey } from "@/lib/shift";
+import { audit } from "@/lib/audit";
+import { fmtKey } from "@/lib/audit-format";
+import { formatMinutes } from "@/lib/worktime";
 
 export type PayoutState = { error?: string; ok?: boolean };
 
@@ -23,7 +26,7 @@ export async function addOvertimePayout(
   _prev: PayoutState,
   formData: FormData,
 ): Promise<PayoutState> {
-  await requireAdmin();
+  const session = await requireAdmin();
 
   const parsed = schema.safeParse({
     userId: formData.get("userId"),
@@ -43,7 +46,7 @@ export async function addOvertimePayout(
   if (hours > 1000) {
     return { error: "Stundenzahl ist unrealistisch hoch." };
   }
-  await prisma.balanceAdjustment.create({
+  const created = await prisma.balanceAdjustment.create({
     data: {
       userId,
       date: dateFromKey(date),
@@ -51,13 +54,30 @@ export async function addOvertimePayout(
       note: note || null,
     },
   });
+  await audit({
+    actor: session.user,
+    action: "balance.payout",
+    subjectUserId: userId,
+    entityId: created.id,
+    summary: `Überstunden-Auszahlung gebucht: ${formatMinutes(created.minutes)} zum ${fmtKey(date)}`,
+    after: { date, minutes: created.minutes, note: created.note },
+  });
 
   revalidatePath("/stundenkonto");
   return { ok: true };
 }
 
 export async function deleteBalanceAdjustment(id: string) {
-  await requireAdmin();
-  await prisma.balanceAdjustment.delete({ where: { id } });
+  const session = await requireAdmin();
+  const old = await prisma.balanceAdjustment.delete({ where: { id } });
+  const date = old.date.toISOString().slice(0, 10);
+  await audit({
+    actor: session.user,
+    action: "balance.delete",
+    subjectUserId: old.userId,
+    entityId: id,
+    summary: `Stundenkonto-Buchung gelöscht: ${formatMinutes(old.minutes)} zum ${fmtKey(date)}`,
+    before: { date, minutes: old.minutes, note: old.note },
+  });
   revalidatePath("/stundenkonto");
 }
